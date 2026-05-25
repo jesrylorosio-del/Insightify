@@ -16,7 +16,7 @@ try {
     $pdo = new PDO(
         "mysql:host=sql103.infinityfree.com;dbname=if0_41842235_insightify;charset=utf8mb4",
         "if0_41842235",
-        "4FCv5M0ZuyFQR7"
+        "***********"
     );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
