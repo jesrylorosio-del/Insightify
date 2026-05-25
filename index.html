@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insightify — Turn Raw Data Into Real Decisions</title>
+  <link rel="stylesheet" href="display.css" />
+  <style>
+    /* ── ENHANCED LANDING PAGE STYLES ── */
+
+    /* Animated background overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(82,183,136,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 20%, rgba(45,106,79,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 40% at 60% 80%, rgba(82,183,136,0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+      animation: ambientShift 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes ambientShift {
+      0%   { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    /* ── HERO OVERRIDES ── */
+    .hero {
+      min-height: 100vh;
+      padding: 120px 80px 80px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(135deg,
+        rgba(2, 10, 6, 0.72) 0%,
+        rgba(5, 18, 12, 0.55) 50%,
+        rgba(2, 10, 6, 0.68) 100%);
+    }
+
+    /* Floating particles */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle 1px at 15% 25%, rgba(82,183,136,0.4) 0%, transparent 1px),
+        radial-gradient(circle 1px at 35% 70%, rgba(82,183,136,0.3) 0%, transparent 1px),
+        radial-gradient(circle 1px at 65% 15%, rgba(82,183,136,0.35) 0%, transparent 1px),
+        radial-gradient(circle 1px at 80% 55%, rgba(82,183,136,0.25) 0%, transparent 1px),
+        radial-gradient(circle 1px at 92% 80%, rgba(82,183,136,0.3) 0%, transparent 1px),
+        radial-gradient(circle 1px at 50% 90%, rgba(82,183,136,0.2) 0%, transparent 1px);
+      pointer-events: none;
+      animation: particleFade 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes particleFade {
+      0%   { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+    /* ── HERO LEFT ── */
+    .hero-content {
+      flex: unset;
+      max-width: unset;
+      position: relative;
+      z-index: 2;
+      animation: fadeSlideUp 0.8s ease both;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(82,183,136,0.08);
+      color: #74C69D;
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid rgba(82,183,136,0.25);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      animation: fadeSlideUp 0.8s 0.1s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(48px, 5vw, 72px);
+      font-weight: 900;
+      color: #e8f5ee;
+      line-height: 1.02;
+      margin-bottom: 20px;
+      letter-spacing: -2.5px;
+      animation: fadeSlideUp 0.8s 0.15s ease both;
+    }
+
+    .hero-title .accent-word {
+      color: var(--accent);
+      font-style: italic;
+      position: relative;
+    }
+
+    .hero-title .accent-word::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      border-radius: 2px;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: rgba(183,228,199,0.55);
+      line-height: 1.9;
+      margin-bottom: 36px;
+      max-width: 400px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      animation: fadeSlideUp 0.8s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+      align-items: center;
+      animation: fadeSlideUp 0.8s 0.25s ease both;
+    }
+
+    .btn-hero-primary {
+      background: linear-gradient(135deg, #52B788, #2d8a5e);
+      color: #051a0c;
+      padding: 14px 30px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      transition: all 0.25s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.2px;
+      box-shadow: 0 4px 20px rgba(82,183,136,0.3);
+    }
+
+    .btn-hero-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(82,183,136,0.45);
+      filter: brightness(1.08);
+    }
+
+    .btn-hero-outline {
+      background: transparent;
+      color: rgba(183,228,199,0.65);
+      padding: 14px 28px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid rgba(82,183,136,0.22);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      transition: all 0.25s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-hero-outline:hover {
+      background: rgba(82,183,136,0.08);
+      border-color: rgba(82,183,136,0.45);
+      color: #74C69D;
+      transform: translateY(-1px);
+    }
+
+    /* Trust badges */
+    .trust-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      animation: fadeSlideUp 0.8s 0.3s ease both;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: rgba(116,198,157,0.45);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .trust-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.5;
+    }
+
+    /* ── HERO CENTER (feature panel) ── */
+    .hero-feature-panel {
+      flex: unset;
+      max-width: unset;
+      position: relative;
+      z-index: 2;
+      animation: fadeSlideUp 0.8s 0.2s ease both;
+    }
+
+    .hfp-card {
+      background: rgba(5, 20, 12, 0.75);
+      border: 1px solid rgba(82,183,136,0.15);
+      border-radius: 16px;
+      padding: 20px 22px;
+      backdrop-filter: blur(20px) saturate(150%);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .hfp-card:last-child { margin-bottom: 0; }
+
+    .hfp-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(82,183,136,0.45), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .hfp-card:hover {
+      border-color: rgba(82,183,136,0.32);
+      background: rgba(8, 28, 18, 0.85);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 20px rgba(82,183,136,0.05);
+    }
+
+    .hfp-card:hover::before { opacity: 1; }
+
+    /* ── HERO RIGHT (KPI cards) ── */
+    .hero-visual {
+      flex: unset;
+      max-width: unset;
+      position: relative;
+      z-index: 2;
+      animation: fadeSlideUp 0.8s 0.3s ease both;
+    }
+
+    .hero-card, .hero-card-sm {
+      background:
+        linear-gradient(135deg, rgba(245,247,246,0.92) 0%, rgba(213,247,230,0.45) 100%),
+        url("card_background.jpeg") center/cover no-repeat;
+      border: 1px solid rgba(199,232,212,0.85);
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 8px 32px rgba(5,20,12,0.2), 0 1px 0 rgba(255,255,255,0.9) inset;
+      transition: all 0.25s;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card-sm { padding: 16px 22px; }
+    .hero-card:last-child, .hero-card-sm:last-child { margin-bottom: 0; }
+
+    .hero-card:hover, .hero-card-sm:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 48px rgba(5,20,12,0.25);
+    }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      background: rgba(3, 12, 7, 0.88);
+      border-top: 1px solid rgba(82,183,136,0.1);
+      border-bottom: 1px solid rgba(82,183,136,0.1);
+      padding: 32px 80px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 16px 24px;
+      border-right: 1px solid rgba(82,183,136,0.1);
+      position: relative;
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num-lg {
+      font-family: 'Fraunces', serif;
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+      letter-spacing: -1px;
+    }
+
+    .stat-label-lg {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: rgba(116,198,157,0.45);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how-section {
+      padding: 110px 80px;
+      background: rgba(3, 10, 6, 0.90);
+      border-top: 1px solid rgba(82,183,136,0.08);
+      border-bottom: 1px solid rgba(82,183,136,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .how-section::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(82,183,136,0.04) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .steps-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .steps-row::before {
+      content: '';
+      position: absolute;
+      top: 27px;
+      left: calc(16.6% + 27px);
+      right: calc(16.6% + 27px);
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(82,183,136,0.25), rgba(82,183,136,0.25), transparent);
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0 16px;
+    }
+
+    /* ── FEATURES ── */
+    .features-section {
+      padding: 110px 80px;
+      background: rgba(5, 14, 9, 0.92);
+      position: relative;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: rgba(8, 24, 15, 0.70);
+      border: 1px solid rgba(82,183,136,0.12);
+      border-radius: 20px;
+      padding: 32px 26px;
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, rgba(82,183,136,0.55), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(82,183,136,0.30);
+      background: rgba(10, 30, 18, 0.82);
+      transform: translateY(-5px);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 30px rgba(82,183,136,0.06);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    /* ── SHOWCASE SECTION (NEW) ── */
+    .showcase-section {
+      padding: 110px 80px;
+      background: rgba(2, 8, 5, 0.93);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .showcase-section::before {
+      content: '';
+      position: absolute;
+      bottom: -200px; right: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(82,183,136,0.05) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .showcase-left { position: relative; z-index: 1; }
+
+    .showcase-label {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .showcase-title {
+      font-family: 'Fraunces', serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: #e8f5ee;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -1.5px;
+    }
+
+    .showcase-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .showcase-desc {
+      font-size: 13px;
+      color: rgba(183,228,199,0.45);
+      font-family: 'DM Mono', monospace;
+      line-height: 1.9;
+      margin-bottom: 36px;
+      font-weight: 300;
+    }
+
+    .showcase-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12.5px;
+      color: rgba(183,228,199,0.65);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .check-icon {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: rgba(82,183,136,0.12);
+      border: 1px solid rgba(82,183,136,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .showcase-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .showcase-card {
+      background: rgba(8, 24, 15, 0.80);
+      border: 1px solid rgba(82,183,136,0.13);
+      border-radius: 14px;
+      padding: 20px 22px;
+      backdrop-filter: blur(16px);
+      transition: all 0.25s;
+    }
+
+    .showcase-card:hover {
+      border-color: rgba(82,183,136,0.28);
+      transform: translateX(4px);
+    }
+
+    .sc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .sc-title {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: rgba(116,198,157,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    .sc-badge {
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+      background: rgba(82,183,136,0.1);
+      border: 1px solid rgba(82,183,136,0.2);
+      padding: 2px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.5px;
+    }
+
+    .mini-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 50px;
+    }
+
+    .mini-bar {
+      flex: 1;
+      border-radius: 3px 3px 0 0;
+      background: rgba(82,183,136,0.2);
+      transition: background 0.2s;
+    }
+
+    .mini-bar.hi { background: linear-gradient(180deg, #52B788, #2d8a5e); }
+    .mini-bar:hover { background: rgba(116,198,157,0.5); }
+
+    .mini-line {
+      height: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mini-line svg { width: 100%; height: 100%; }
+
+    /* ── TESTIMONIALS / SOCIAL PROOF ── */
+    .proof-section {
+      padding: 80px 80px;
+      background: rgba(4, 12, 7, 0.91);
+      border-top: 1px solid rgba(82,183,136,0.08);
+    }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1100px;
+      margin: 48px auto 0;
+    }
+
+    .proof-card {
+      background: rgba(8, 22, 13, 0.70);
+      border: 1px solid rgba(82,183,136,0.10);
+      border-radius: 16px;
+      padding: 28px 24px;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s;
+      position: relative;
+    }
+
+    .proof-card:hover {
+      border-color: rgba(82,183,136,0.22);
+      transform: translateY(-3px);
+    }
+
+    .proof-quote {
+      font-size: 13px;
+      color: rgba(183,228,199,0.55);
+      font-family: 'DM Mono', monospace;
+      line-height: 1.8;
+      font-weight: 300;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    .proof-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .proof-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(82,183,136,0.3), rgba(45,106,79,0.4));
+      border: 1px solid rgba(82,183,136,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .proof-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(183,228,199,0.75);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .proof-role {
+      font-size: 10px;
+      color: rgba(116,198,157,0.4);
+      font-family: 'DM Mono', monospace;
+      margin-top: 1px;
+    }
+
+    .proof-stars {
+      position: absolute;
+      top: 24px;
+      right: 22px;
+      color: var(--accent);
+      font-size: 10px;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      padding: 100px 80px;
+      background: rgba(2, 8, 5, 0.94);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(82,183,136,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .cta-title {
+      font-family: 'Fraunces', serif;
+      font-size: 54px;
+      font-weight: 900;
+      color: #e8f5ee;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-title em { color: var(--accent); font-style: italic; }
+
+    .cta-sub {
+      font-size: 13px;
+      color: rgba(183,228,199,0.45);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 32px 80px;
+      background: rgba(2, 6, 4, 0.96);
+      border-top: 1px solid rgba(82,183,136,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-link {
+      font-size: 10px;
+      color: rgba(82,183,136,0.3);
+      font-family: 'DM Mono', monospace;
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover { color: rgba(82,183,136,0.6); }
+
+    /* ── HEADER IMPROVEMENTS ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      height: 64px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-right: 32px;
+    }
+
+    .nav-link-item {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: rgba(116,198,157,0.5);
+      text-decoration: none;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-link-item:hover { color: var(--accent); }
+
+    /* ── SCROLL INDICATOR ── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+      animation: fadeSlideUp 1s 0.6s ease both;
+    }
+
+    .scroll-hint-text {
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      color: rgba(82,183,136,0.3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .scroll-arrow {
+      width: 20px; height: 30px;
+      border: 1px solid rgba(82,183,136,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 5px;
+    }
+
+    .scroll-dot {
+      width: 3px; height: 6px;
+      border-radius: 3px;
+      background: var(--accent);
+      opacity: 0.5;
+      animation: scrollDot 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollDot {
+      0%,100% { transform: translateY(0); opacity: 0.5; }
+      50%      { transform: translateY(10px); opacity: 0.1; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      .hero { grid-template-columns: 1fr 1fr; padding: 110px 40px 80px; }
+      .hero-visual { display: none; }
+      .stats-strip { grid-template-columns: repeat(2, 1fr); padding: 32px 40px; }
+      .showcase-grid { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; padding: 100px 24px 60px; }
+      .hero-feature-panel { display: none; }
+      .stats-strip { grid-template-columns: 1fr 1fr; padding: 24px; }
+      .how-section, .features-section, .showcase-section, .proof-section, .cta-section { padding: 72px 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr; }
+      .steps-row { grid-template-columns: 1fr; }
+      .steps-row::before { display: none; }
+      .footer { flex-direction: column; gap: 16px; padding: 24px; text-align: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+      .hero-title { font-size: 44px; }
+      .cta-title { font-size: 36px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <a href="#home" class="logo">Insightify</a>
+  <nav class="nav-links">
+    <a href="#how" class="nav-link-item">How It Works</a>
+    <a href="#features" class="nav-link-item">Features</a>
+    <a href="#showcase" class="nav-link-item">Showcase</a>
+  </nav>
+  <nav class="nav-right">
+    <div id="nav-auth">
+      <button class="btn btn-primary btn-sm" onclick="showAuth('login')">Login</button>
+    </div>
+    <div id="nav-user" class="hidden">
+      <button class="btn btn-primary btn-sm" onclick="logout()">Logout</button>
+      <div class="nav-avatar" id="nav-avatar">?</div>
+    </div>
+  </nav>
+</header>
+
+<!-- ── HERO ── -->
+<section class="hero" id="home">
+
+  <!-- LEFT -->
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span>📊</span> Web-Based Reporting System
+    </div>
+    <h1 class="hero-title">
+      Turn Raw Data<br>
+      Into <span class="accent-word">Real</span><br>
+      Decisions.
+    </h1>
+    <p class="hero-sub">
+      Insightify transforms your spreadsheet data into meaningful business insights — interactive charts, smart filtering, and one-click PowerPoint export.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-hero-primary" onclick="showAuth('login')">
+        ✦ Get Started Free
+      </button>
+      <a href="#features" class="btn-hero-outline">Explore Features ↓</a>
+    </div>
+    <div class="trust-row">
+      <div class="trust-item"><div class="trust-dot"></div> No setup required</div>
+      <div class="trust-item"><div class="trust-dot"></div> Any spreadsheet format</div>
+      <div class="trust-item"><div class="trust-dot"></div> Instant insights</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="hero-feature-panel">
+    <div class="hfp-card">
+      <div class="hfp-title">Sales by Product — Bar Chart</div>
+      <div class="hfp-chart-preview">
+        <div class="hfp-bar" style="height:55%"></div>
+        <div class="hfp-bar hi" style="height:90%"></div>
+        <div class="hfp-bar" style="height:65%"></div>
+        <div class="hfp-bar" style="height:40%"></div>
+        <div class="hfp-bar hi" style="height:78%"></div>
+        <div class="hfp-bar" style="height:50%"></div>
+        <div class="hfp-bar" style="height:72%"></div>
+      </div>
+      <div class="hfp-spark-labels">
+        <span class="hfp-spark-lbl">Jan</span>
+        <span class="hfp-spark-lbl">Feb</span>
+        <span class="hfp-spark-lbl">Mar</span>
+        <span class="hfp-spark-lbl">Apr</span>
+        <span class="hfp-spark-lbl">May</span>
+        <span class="hfp-spark-lbl">Jun</span>
+        <span class="hfp-spark-lbl">Jul</span>
+      </div>
+    </div>
+    <div class="hfp-card">
+      <div class="hfp-title">Multi-Select Filter</div>
+      <div class="hfp-row">
+        <span class="hfp-row-label">☑ North Region</span>
+        <span class="hfp-badge">included</span>
+      </div>
+      <div class="hfp-row">
+        <span class="hfp-row-label">☑ South Region</span>
+        <span class="hfp-badge">included</span>
+      </div>
+      <div class="hfp-row">
+        <span class="hfp-row-label">☐ East Region</span>
+        <span class="hfp-badge-off">excluded</span>
+      </div>
+      <div class="hfp-row">
+        <span class="hfp-row-label">☑ West Region</span>
+        <span class="hfp-badge">included</span>
+      </div>
+    </div>
+    <div class="hfp-card">
+      <div class="hfp-title">Supported Formats</div>
+      <div class="hfp-formats">
+        <span class="hfp-format">.xlsx</span>
+        <span class="hfp-format">.xls</span>
+        <span class="hfp-format">.xlsm</span>
+        <span class="hfp-format">.xlsb</span>
+        <span class="hfp-format">.ods</span>
+        <span class="hfp-format">.csv</span>
+        <span class="hfp-format">.xltx</span>
+        <span class="hfp-format">.xltm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="hero-visual">
+    <div class="hero-card">
+      <div class="hc-label">Export Selection</div>
+      <div class="hc-value-sm">Choose Your Charts</div>
+      <div class="hc-change" style="margin-bottom:14px">Select which comparisons go into your PPT</div>
+      <div class="export-preview-list">
+        <label class="export-preview-item checked"><span class="ep-check">☑</span> Revenue by Product</label>
+        <label class="export-preview-item checked"><span class="ep-check">☑</span> Sales by Region</label>
+        <label class="export-preview-item"><span class="ep-check">☐</span> Orders by Category</label>
+        <label class="export-preview-item checked"><span class="ep-check">☑</span> Quantity by Month</label>
+      </div>
+    </div>
+    <div class="hero-card-sm">
+      <div class="hc-label">Chart Types</div>
+      <div class="chart-type-list">
+        <span class="chart-type-pill">Bar</span>
+        <span class="chart-type-pill">Line</span>
+        <span class="chart-type-pill active">Doughnut</span>
+        <span class="chart-type-pill">Pie</span>
+        <span class="chart-type-pill">Radar</span>
+      </div>
+    </div>
+    <div class="hero-card-sm">
+      <div class="hc-label">One-Click PPT Export</div>
+      <div class="hc-value-sm">⬇ Download Slides</div>
+      <div class="hc-change">Selected charts → PowerPoint instantly</div>
+    </div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="scroll-hint">
+    <div class="scroll-arrow"><div class="scroll-dot"></div></div>
+    <span class="scroll-hint-text">Scroll</span>
+  </div>
+
+</section>
+
+<!-- ── STATS STRIP ── -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <div class="stat-num-lg">5+</div>
+    <div class="stat-label-lg">Chart Types</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num-lg">8+</div>
+    <div class="stat-label-lg">File Formats</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num-lg">1-click</div>
+    <div class="stat-label-lg">PPT Export</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num-lg">Real-time</div>
+    <div class="stat-label-lg">Data Filtering</div>
+  </div>
+</div>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how-section" id="how">
+  <div class="section-label">How It Works</div>
+  <h2 class="section-title">Four dashboards. Full picture.</h2>
+  <p class="section-sub">Log in and everything is ready — live data, charts, and exports across four intelligent views.</p>
+  <div class="steps-row" style="grid-template-columns:repeat(4,1fr);max-width:1100px;">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Executive Summary</div>
+      <p class="step-desc">Total revenue, avg. LTV, churn rate, active sessions, sales trends, payment distribution, and a full transaction log — all in one view.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Sales Intelligence</div>
+      <p class="step-desc">Revenue by product, order status breakdown, sales by day of week, and top customers ranked by total spend.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Product Performance</div>
+      <p class="step-desc">Monthly revenue trends, units sold share, product leaderboard, and avg. revenue per product — sorted and filterable.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Reports & Overview</div>
+      <p class="step-desc">Live activity feed, weekly highlights, revenue snapshots, data health monitoring, and one-click CSV exports.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features-section" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">Built for real business data</h2>
+  <p class="section-sub">Every feature you see is live — connected to your actual transactions, products, and customers.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">📈</span>
+      <div class="feature-title">Sales Trends Chart</div>
+      <p class="feature-desc">Monthly revenue plotted over time with a target line you can set. Spot peaks, dips, and seasonal patterns at a glance.</p>
+      <div class="feature-tags">
+        <span class="feature-tag">Line chart</span>
+        <span class="feature-tag">Set target</span>
+        <span class="feature-tag">12-month view</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🥧</span>
+      <div class="feature-title">Payment Distribution</div>
+      <p class="feature-desc">Doughnut chart breaking down revenue by payment method — Bank Transfer, Digital Wallet, Credit Card — with live percentages.</p>
+      <div class="feature-tags">
+        <span class="feature-tag">Doughnut chart</span>
+        <span class="feature-tag">By channel</span>
+        <span class="feature-tag">YTD</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🏆</span>
+      <div class="feature-title">Product Leaderboard</div>
+      <p class="feature-desc">Ranked list of all products by total revenue with animated progress bars, units sold, and monthly trend lines.</p>
+      <div class="feature-tags">
+        <span class="feature-tag">Ranked</span>
+        <span class="feature-tag">Revenue bars</span>
+        <span class="feature-tag">Units sold</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📋</span>
+      <div class="feature-title">Transaction Log</div>
+      <p class="feature-desc">Full paginated transaction table with TX ID, customer, product, date, status badges, and amount. Export or import with one click.</p>
+      <div class="feature-tags">
+        <span class="feature-tag">Export CSV</span>
+        <span class="feature-tag">Import</span>
+        <span class="feature-tag">Filter</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">👥</span>
+      <div class="feature-title">Top Customers</div>
+      <p class="feature-desc">Ranked customer list by total revenue with individual spend breakdowns. Identify your most valuable buyers instantly.</p>
+      <div class="feature-tags">
+        <span class="feature-tag">By revenue</span>
+        <span class="feature-tag">All time</span>
+        <span class="feature-tag">Ranked</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🛡️</span>
+      <div class="feature-title">Data Health Monitor</div>
+      <p class="feature-desc">System health checks for failed transactions, missing records, pending orders, and users who never logged in — with anomaly alerts.</p>
+      <div class="feature-tags">
+        <span class="feature-tag">Anomaly detection</span>
+        <span class="feature-tag">Integrity checks</span>
+        <span class="feature-tag">Live status</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SHOWCASE ── -->
+<section class="showcase-section" id="showcase">
+  <div class="showcase-grid">
+    <div class="showcase-left">
+      <div class="showcase-label">Built for Business</div>
+      <h2 class="showcase-title">Powerful analytics,<br><em>zero complexity</em></h2>
+      <p class="showcase-desc">
+        From raw CSV files to boardroom-ready presentations — Insightify bridges the gap between your data and the decisions that matter.
+      </p>
+      <div class="showcase-checklist">
+        <div class="check-item">
+          <div class="check-icon">✓</div>
+          Interactive charts that update in real time as you filter
+        </div>
+        <div class="check-item">
+          <div class="check-icon">✓</div>
+          Full transaction history with search and pagination
+        </div>
+        <div class="check-item">
+          <div class="check-icon">✓</div>
+          Revenue, product, and customer performance dashboards
+        </div>
+        <div class="check-item">
+          <div class="check-icon">✓</div>
+          Export any report as CSV or PowerPoint instantly
+        </div>
+        <div class="check-item">
+          <div class="check-icon">✓</div>
+          Data health monitoring and anomaly detection built in
+        </div>
+      </div>
+    </div>
+    <div class="showcase-right">
+      <div class="showcase-card">
+        <div class="sc-header">
+          <div class="sc-title">Revenue by Product</div>
+          <div class="sc-badge">Live</div>
+        </div>
+        <div class="mini-bars">
+          <div class="mini-bar hi" style="height:90%"></div>
+          <div class="mini-bar" style="height:65%"></div>
+          <div class="mini-bar hi" style="height:78%"></div>
+          <div class="mini-bar" style="height:45%"></div>
+          <div class="mini-bar" style="height:55%"></div>
+          <div class="mini-bar hi" style="height:70%"></div>
+          <div class="mini-bar" style="height:38%"></div>
+          <div class="mini-bar" style="height:60%"></div>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="sc-header">
+          <div class="sc-title">Order Status Breakdown</div>
+          <div class="sc-badge">All Time</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:4px;">
+          <div style="flex:1;background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.2);border-radius:8px;padding:10px 14px;">
+            <div style="font-size:18px;font-weight:700;color:#52B788;font-family:'DM Mono',monospace;">67%</div>
+            <div style="font-size:9px;color:rgba(116,198,157,0.5);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Completed</div>
+          </div>
+          <div style="flex:1;background:rgba(224,168,92,0.08);border:1px solid rgba(224,168,92,0.15);border-radius:8px;padding:10px 14px;">
+            <div style="font-size:18px;font-weight:700;color:#e0a85c;font-family:'DM Mono',monospace;">14%</div>
+            <div style="font-size:9px;color:rgba(224,168,92,0.45);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Pending</div>
+          </div>
+          <div style="flex:1;background:rgba(224,92,92,0.08);border:1px solid rgba(224,92,92,0.15);border-radius:8px;padding:10px 14px;">
+            <div style="font-size:18px;font-weight:700;color:#e05c5c;font-family:'DM Mono',monospace;">19%</div>
+            <div style="font-size:9px;color:rgba(224,92,92,0.45);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Failed</div>
+          </div>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="sc-header">
+          <div class="sc-title">Top Customers</div>
+          <div class="sc-badge">This Month</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:20px;height:20px;border-radius:50%;background:rgba(82,183,136,0.15);border:1px solid rgba(82,183,136,0.25);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--accent);font-family:'DM Mono',monospace;">1</div>
+              <span style="font-size:11px;color:rgba(183,228,199,0.65);font-family:'DM Mono',monospace;">Sofia Garcia</span>
+            </div>
+            <span style="font-size:11px;color:rgba(183,228,199,0.8);font-family:'DM Mono',monospace;">$23,116</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:20px;height:20px;border-radius:50%;background:rgba(82,183,136,0.1);border:1px solid rgba(82,183,136,0.18);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--accent);font-family:'DM Mono',monospace;">2</div>
+              <span style="font-size:11px;color:rgba(183,228,199,0.55);font-family:'DM Mono',monospace;">Chloe Nguyen</span>
+            </div>
+            <span style="font-size:11px;color:rgba(183,228,199,0.65);font-family:'DM Mono',monospace;">$13,991</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:20px;height:20px;border-radius:50%;background:rgba(82,183,136,0.07);border:1px solid rgba(82,183,136,0.12);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--accent);font-family:'DM Mono',monospace;">3</div>
+              <span style="font-size:11px;color:rgba(183,228,199,0.45);font-family:'DM Mono',monospace;">Daniel Kim</span>
+            </div>
+            <span style="font-size:11px;color:rgba(183,228,199,0.5);font-family:'DM Mono',monospace;">$13,546</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF ── -->
+<section class="proof-section" id="reviews">
+    <div class="section-label">What People Say</div>
+    <h2 class="section-title">Built to impress</h2>
+    <p class="section-sub">Designed for analysts, managers, and anyone who works with data.</p>
+   
+    <!-- Cards loaded here by loadReviews() from insightify.js -->
+    <div class="proof-grid" id="proof-grid">
+      <!-- Skeleton placeholders while fetching -->
+      <div class="proof-card proof-skeleton"></div>
+      <div class="proof-card proof-skeleton"></div>
+      <div class="proof-card proof-skeleton"></div>
+    </div>
+   
+    <!-- ── Leave a Review Form ── -->
+    <div class="review-form-wrap">
+   
+      <div class="review-form-header">
+        <span class="live-dot"></span>
+        <div class="review-form-title">Leave a Review</div>
+      </div>
+      <p class="review-form-sub">Only 5-star reviews are displayed publicly.</p>
+   
+      <!-- Star Rating -->
+      <div class="review-stars-wrap">
+        <div class="review-stars-row">
+          <button class="review-star-btn" data-v="1" onclick="setReviewRating(1)">★</button>
+          <button class="review-star-btn" data-v="2" onclick="setReviewRating(2)">★</button>
+          <button class="review-star-btn" data-v="3" onclick="setReviewRating(3)">★</button>
+          <button class="review-star-btn" data-v="4" onclick="setReviewRating(4)">★</button>
+          <button class="review-star-btn" data-v="5" onclick="setReviewRating(5)">★</button>
+        </div>
+        <div class="review-star-hint" id="rv-star-hint">Click to rate</div>
+      </div>
+   
+      <!-- Name / Position / Location -->
+      <div class="review-fields-grid">
+        <div class="review-field-group">
+          <label>Full Name</label>
+          <input type="text" id="rv-name" placeholder="e.g. Juan Dela Cruz" />
+          <div class="review-field-error" id="rve-name"></div>
+        </div>
+        <div class="review-field-group">
+          <label>Position / Role</label>
+          <input type="text" id="rv-position" placeholder="e.g. Sales Manager" />
+          <div class="review-field-error" id="rve-position"></div>
+        </div>
+        <div class="review-field-group">
+          <label>Location / City</label>
+          <input type="text" id="rv-location" placeholder="e.g. Manila" />
+          <div class="review-field-error" id="rve-location"></div>
+        </div>
+      </div>
+   
+      <!-- Review Text -->
+      <div class="review-full-row">
+        <div class="review-field-group">
+          <label>Your Review</label>
+          <textarea id="rv-text" placeholder="Share your honest experience with Insightify..."></textarea>
+          <div class="review-field-error" id="rve-text"></div>
+        </div>
+      </div>
+   
+      <!-- Status message -->
+      <div class="review-msg" id="review-msg"></div>
+   
+      <!-- Submit -->
+      <div class="review-submit-wrap">
+        <button class="btn-review-submit" id="rv-submit-btn" onclick="submitReview()">
+          ✦ Submit Review
+        </button>
+      </div>
+   
+      <p class="review-disclaimer">
+        All reviews are saved. Only 5-star reviews appear on this page.
+      </p>
+   
+    </div>
+  </section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <h2 class="cta-title">Ready to see your<br>data <em>clearly</em>?</h2>
+  <p class="cta-sub">No setup required. Upload a file and get insights in seconds.</p>
+  <div class="cta-actions">
+    <button class="btn-hero-primary" onclick="showAuth('login')" style="font-size:14px;padding:15px 36px;">
+      ✦ Get Started Free
+    </button>
+    <a href="#features" class="btn-hero-outline" style="font-size:14px;padding:15px 28px;">
+      Learn More
+    </a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="footer-logo">Insightify</div>
+  <div class="footer-links">
+    <a href="#how" class="footer-link">How It Works</a>
+    <a href="#features" class="footer-link">Features</a>
+    <a href="#showcase" class="footer-link">Showcase</a>
+  </div>
+  <div class="footer-text">© 2025 Insightify · Web-Based Reporting System</div>
+</footer>
+
+<!-- ── AUTH MODAL ── -->
+<div class="modal-overlay" id="auth-overlay" onclick="closeAuthOnBg(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuth()">✕</button>
+    <div class="modal-logo">Insightify</div>
+    <div class="modal-subtitle">Sales Intelligence Platform</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="modal-tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+    <!-- LOGIN -->
+    <div class="auth-form active" id="form-login">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@email.com"
+               onkeydown="if(event.key==='Enter') submitLogin()">
+        <div class="field-error" id="err-login-email"></div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="password-wrap">
+          <input type="password" id="login-password" placeholder="Enter your password"
+                 onkeydown="if(event.key==='Enter') submitLogin()">
+          <button class="toggle-pw" onclick="togglePw('login-password', this)">👁</button>
+        </div>
+        <div class="field-error" id="err-login-password"></div>
+      </div>
+      <div class="auth-msg" id="login-msg"></div>
+      <button class="btn-auth" id="btn-login" onclick="submitLogin()">Login</button>
+      <div class="modal-footer">
+        No account yet? <a onclick="switchTab('signup')">Sign up here</a>
+      </div>
+    </div>
+    <!-- SIGNUP -->
+    <div class="auth-form" id="form-signup">
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="signup-firstname" placeholder="Juan">
+          <div class="field-error" id="err-signup-firstname"></div>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="signup-lastname" placeholder="Dela Cruz">
+          <div class="field-error" id="err-signup-lastname"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="signup-email" placeholder="you@email.com">
+        <div class="field-error" id="err-signup-email"></div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="password-wrap">
+          <input type="password" id="signup-password" placeholder="At least 6 characters">
+          <button class="toggle-pw" onclick="togglePw('signup-password', this)">👁</button>
+        </div>
+        <div class="field-error" id="err-signup-password"></div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div class="password-wrap">
+          <input type="password" id="signup-confirm" placeholder="Repeat password">
+          <button class="toggle-pw" onclick="togglePw('signup-confirm', this)">👁</button>
+        </div>
+        <div class="field-error" id="err-signup-confirm"></div>
+      </div>
+      <div class="auth-msg" id="signup-msg"></div>
+      <button class="btn-auth" id="btn-signup" onclick="submitSignup()">Create Account</button>
+      <div class="modal-footer">
+        Already have an account? <a onclick="switchTab('login')">Login here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="insightify.js"></script>
+
+</body>
+</html>

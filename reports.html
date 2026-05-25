@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insightify — Reports &amp; Overview</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ── Fix undefined CSS vars from reports.html scorecard ── */
+    .scorecard {
+      background: linear-gradient(145deg, rgba(8,30,18,0.80), rgba(5,18,12,0.92));
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid rgba(82,183,136,0.12);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .scorecard:hover {
+      border-color: rgba(82,183,136,0.38);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(82,183,136,0.12);
+    }
+    .scorecard::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .scorecard:hover::before { opacity: 1; }
+
+    .scorecard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .scorecard-icon {
+      font-size: 18px;
+      margin-bottom: 4px;
+      opacity: 0.6;
+      color: var(--accent);
+    }
+    .scorecard-label {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: var(--muted-lt);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    .scorecard-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      font-family: 'DM Mono', monospace;
+    }
+    .scorecard-sub {
+      font-size: 11px;
+      color: var(--muted-lt);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Section dividers ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-divider-label {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+    .section-divider-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(82,183,136,0.1);
+    }
+
+    /* ── Two-column reports grid ── */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    /* ── Activity Feed ── */
+    .feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(82,183,136,0.07);
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .feed-dot-green  { background: #52B788; box-shadow: 0 0 6px rgba(82,183,136,0.5); }
+    .feed-dot-orange { background: #e0a85c; box-shadow: 0 0 6px rgba(224,168,92,0.5); }
+    .feed-dot-red    { background: #e05c5c; box-shadow: 0 0 6px rgba(224,92,92,0.4); }
+    .feed-dot-blue   { background: rgba(82,183,136,0.5); }
+    .feed-text {
+      flex: 1;
+      font-size: 12.5px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .feed-time {
+      font-size: 10.5px;
+      color: var(--muted-lt);
+      font-family: 'DM Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    /* ── Export Center ── */
+    .export-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .export-card {
+      background: rgba(82,183,136,0.04);
+      border: 1px solid rgba(82,183,136,0.12);
+      border-radius: 10px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .export-card:hover {
+      background: rgba(82,183,136,0.10);
+      border-color: rgba(82,183,136,0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(82,183,136,0.1);
+    }
+    .export-card-icon { font-size: 20px; color: var(--accent); opacity: 0.7; }
+    .export-card-title { font-size: 12.5px; color: var(--text); font-weight: 500; }
+    .export-card-desc {
+      font-size: 10.5px;
+      color: var(--muted-lt);
+      font-family: 'DM Mono', monospace;
+      line-height: 1.5;
+    }
+    .export-card-btn {
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Date Range ── */
+    .date-range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .date-input {
+      background: rgba(5,15,10,0.7);
+      border: 1px solid rgba(82,183,136,0.2);
+      border-radius: 7px;
+      padding: 7px 12px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .date-input:focus { border-color: var(--accent); }
+    .date-label {
+      font-size: 11px;
+      color: var(--muted-lt);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Data Health ── */
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .health-item {
+      background: rgba(82,183,136,0.04);
+      border: 1px solid rgba(82,183,136,0.10);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .health-label {
+      font-size: 10px;
+      color: var(--muted-lt);
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .health-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+    .health-status { font-size: 10px; font-family: 'DM Mono', monospace; }
+    .health-ok   { color: #52B788; }
+    .health-warn { color: #e0a85c; }
+    .health-err  { color: #e05c5c; }
+
+    .anomaly-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 13px;
+      background: rgba(82,183,136,0.04);
+      border: 1px solid rgba(82,183,136,0.10);
+      border-radius: 8px;
+      margin-bottom: 7px;
+      font-size: 12px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+    .anomaly-row:last-child { margin-bottom: 0; }
+    .anomaly-icon { font-size: 13px; flex-shrink: 0; }
+
+    /* ── Weekly highlights row ── */
+    .wk-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(82,183,136,0.07);
+    }
+    .wk-row:last-child { border-bottom: none; }
+    .wk-left { display: flex; align-items: center; gap: 10px; }
+    .wk-icon { font-size: 13px; opacity: 0.55; }
+    .wk-label {
+      font-size: 12.5px;
+      color: var(--muted-lt);
+      font-family: 'DM Mono', monospace;
+    }
+    .wk-right { display: flex; align-items: center; gap: 8px; }
+    .wk-value { font-size: 13.5px; font-weight: 600; color: var(--text); }
+    .wk-change {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+    }
+    .wk-up   { color: #52B788; }
+    .wk-down { color: #e05c5c; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .scorecard-grid { grid-template-columns: 1fr 1fr; }
+      .reports-grid   { grid-template-columns: 1fr; }
+      .health-grid    { grid-template-columns: 1fr 1fr; }
+      .export-grid    { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ LOGOUT MODAL ══════════════════════════════════════ -->
+  <div class="modal-backdrop" id="logoutModal">
+    <div class="modal-card">
+      <div class="modal-icon">&#x23FB;</div>
+      <h3 class="modal-title">Sign Out?</h3>
+      <p class="modal-body">You'll be returned to the login page.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel"  id="modalCancelBtn">Cancel</button>
+        <button class="btn-modal-confirm" id="modalConfirmBtn">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hamburger (mobile) -->
+  <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">&#x2630;</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading Reports&hellip;</div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ══ SIDEBAR ════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">&#x2726;</div>
+        <span class="sidebar-logo-text">Insightify</span>
+      </div>
+
+      <span class="sidebar-section-label">Navigation</span>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a class="nav-link" href="dashboard.html">
+            <span class="nav-icon">&#x25C8;</span> Executive Summary
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="sales.html">
+            <span class="nav-icon">&#x27E1;</span> Sales Intelligence
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="product.html">
+            <span class="nav-icon">&#x2B21;</span> Product Performance
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="reports.html">
+            <span class="nav-icon">&#x25C9;</span> Reports &amp; Overview
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="nav-link" style="cursor:default;">
+          <span class="nav-icon">&#x2299;</span>
+          <div>
+            <div style="font-size:12.5px;color:var(--text);" id="sidebarUserName">Analyst User</div>
+            <div style="font-size:10.5px;color:var(--muted-lt);font-family:'DM Mono',monospace;">Pro Plan</div>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn" title="Sign out">
+          <span class="logout-icon">&#x23FB;</span>
+          <span class="logout-label">Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ HEADER ══════════════════════════════════════════ -->
+    <header class="top-header">
+      <div class="header-greeting">
+        <h2 id="greetingText">Good morning, Analyst</h2>
+        <span id="greetingDate"></span>
+      </div>
+      <div class="header-center"></div>
+
+      <div class="header-actions">
+        <button class="btn-refresh" id="refreshBtn" title="Refresh data">&#x21BA;</button>
+        <div class="user-badge" id="avatarLogout" title="Sign out">
+          <div class="user-avatar" id="userAvatarInitials">A</div>
+          <div class="user-info">
+            <div class="user-fullname" id="userFullName">Analyst User</div>
+            <div class="user-role">Analyst</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ MAIN ════════════════════════════════════════════ -->
+    <main class="main-content">
+
+      <div class="page-title">
+        <h1>Reports <em>&amp; Overview</em></h1>
+        <span class="page-title-meta" id="liveTime"></span>
+      </div>
+
+      <!-- Error banner -->
+      <div class="error-banner" id="errorBanner" style="display:none;">
+        <span>&#x26A0; Could not load report data. Check that your server is running and
+          <code>backend/reports.php</code> is accessible.</span>
+        <button onclick="document.getElementById('errorBanner').style.display='none'">&#x2715;</button>
+      </div>
+
+      <!-- ══ SECTION 1: Summary Scorecard ══════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-label">&#x25A0; Summary Scorecard</span>
+        <div class="section-divider-line"></div>
+      </div>
+      <div class="scorecard-grid">
+        <div class="scorecard">
+          <div class="scorecard-icon">$</div>
+          <div class="scorecard-label">Total Revenue</div>
+          <div class="scorecard-value" id="sc-revenue">&mdash;</div>
+          <div class="scorecard-sub"  id="sc-revenue-sub">all time · completed</div>
+        </div>
+        <div class="scorecard">
+          <div class="scorecard-icon">&#x2023;</div>
+          <div class="scorecard-label">Total Orders</div>
+          <div class="scorecard-value" id="sc-orders">&mdash;</div>
+          <div class="scorecard-sub"  id="sc-orders-sub">all statuses</div>
+        </div>
+        <div class="scorecard">
+          <div class="scorecard-icon">&#x2B21;</div>
+          <div class="scorecard-label">Products</div>
+          <div class="scorecard-value" id="sc-products">&mdash;</div>
+          <div class="scorecard-sub"  id="sc-products-sub">in catalog</div>
+        </div>
+        <div class="scorecard">
+          <div class="scorecard-icon">&#x25C9;</div>
+          <div class="scorecard-label">Total Users</div>
+          <div class="scorecard-value" id="sc-users">&mdash;</div>
+          <div class="scorecard-sub"  id="sc-users-sub">registered</div>
+        </div>
+      </div>
+
+      <!-- ══ SECTION 2: Activity Feed + Weekly Highlights ══ -->
+      <div class="section-divider">
+        <span class="section-divider-label">&#x25A0; Recent Activity</span>
+        <div class="section-divider-line"></div>
+      </div>
+      <div class="reports-grid">
+
+        <!-- Activity Feed -->
+        <div class="glass-card" style="padding:24px;">
+          <div class="chart-title" style="margin-bottom:3px;">Live Activity Feed</div>
+          <div class="chart-subtitle" style="margin-bottom:16px;">Latest events across the system</div>
+          <div id="activityFeed">
+            <div style="text-align:center;color:var(--muted-lt);padding:24px;font-size:12px;">
+              Loading&hellip;
+            </div>
+          </div>
+        </div>
+
+        <!-- This Week's Highlights -->
+        <div class="glass-card" style="padding:24px;">
+          <div class="chart-title" style="margin-bottom:3px;">This Week&rsquo;s Highlights</div>
+          <div class="chart-subtitle" style="margin-bottom:16px;">Key metrics for the last 7 days</div>
+          <div id="weeklyHighlights">
+            <div style="text-align:center;color:var(--muted-lt);padding:24px;font-size:12px;">
+              Loading&hellip;
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ SECTION 3: Revenue Snapshot + Top Products ════ -->
+      <div class="reports-grid">
+
+        <!-- Revenue Snapshot -->
+        <div class="glass-card" style="padding:24px;">
+          <div class="chart-title" style="margin-bottom:3px;">Revenue Snapshot</div>
+          <div class="chart-subtitle" style="margin-bottom:16px;">Daily revenue &middot; last 14 days</div>
+          <div style="height:165px;">
+            <canvas id="snapshotChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Products This Week -->
+        <div class="glass-card" style="padding:24px;">
+          <div class="chart-title" style="margin-bottom:3px;">Top Products of the Week</div>
+          <div class="chart-subtitle" style="margin-bottom:16px;">By revenue &middot; last 7 days</div>
+          <div id="topProductsWeek">
+            <div style="text-align:center;color:var(--muted-lt);padding:24px;font-size:12px;">
+              Loading&hellip;
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ SECTION 4: Export Center ══════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-label">&#x25A0; Export Center</span>
+        <div class="section-divider-line"></div>
+      </div>
+      <div class="glass-card" style="padding:26px;margin-bottom:22px;">
+        <div class="chart-title" style="margin-bottom:3px;">Download Reports</div>
+        <div class="chart-subtitle" style="margin-bottom:18px;">
+          Choose a date range then click any report to download as CSV
+        </div>
+
+        <div class="date-range-row">
+          <span class="date-label">From</span>
+          <input type="date" class="date-input" id="exportDateFrom" />
+          <span class="date-label">To</span>
+          <input type="date" class="date-input" id="exportDateTo" />
+          <button class="btn-ghost" id="applyDateRange"
+            style="font-size:11px;padding:6px 14px;">&#x2713; Apply Range</button>
+          <button class="btn-ghost" id="resetDateRange"
+            style="font-size:11px;padding:6px 14px;opacity:0.6;">&#x21BA; Reset</button>
+        </div>
+        <div id="dateRangeStatus"
+          style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;
+                 margin-bottom:16px;min-height:16px;"></div>
+
+        <div class="export-grid">
+          <div class="export-card" id="exportTransactions">
+            <div class="export-card-icon">&#x2913;</div>
+            <div class="export-card-title">Transactions Report</div>
+            <div class="export-card-desc">
+              All transaction records with customer, product, date, status, and amount.
+            </div>
+            <div class="export-card-btn">&#x2913; Download CSV</div>
+          </div>
+          <div class="export-card" id="exportProducts">
+            <div class="export-card-icon">&#x2B21;</div>
+            <div class="export-card-title">Product Performance Report</div>
+            <div class="export-card-desc">
+              Revenue, units sold, avg order value, and revenue share per product.
+            </div>
+            <div class="export-card-btn">&#x2913; Download CSV</div>
+          </div>
+          <div class="export-card" id="exportRevenue">
+            <div class="export-card-icon">$</div>
+            <div class="export-card-title">Monthly Revenue Report</div>
+            <div class="export-card-desc">
+              Month-by-month revenue totals, order counts, and growth rates.
+            </div>
+            <div class="export-card-btn">&#x2913; Download CSV</div>
+          </div>
+          <div class="export-card" id="exportSummary">
+            <div class="export-card-icon">&#x25A3;</div>
+            <div class="export-card-title">Full Summary Report</div>
+            <div class="export-card-desc">
+              Complete system overview — KPIs, top product, top customer in one file.
+            </div>
+            <div class="export-card-btn">&#x2913; Download CSV</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SECTION 5: Data Health ═════════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-label">&#x25A0; Data Health</span>
+        <div class="section-divider-line"></div>
+      </div>
+      <div class="glass-card" style="padding:26px;margin-bottom:28px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div>
+            <div class="chart-title" style="margin-bottom:3px;">System Health Monitor</div>
+            <div class="chart-subtitle">
+              Record counts, integrity checks &amp; anomaly detection
+            </div>
+          </div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted-lt);">
+            Last checked: <span id="lastChecked" style="color:var(--accent);">—</span>
+          </div>
+        </div>
+
+        <div class="health-grid">
+          <div class="health-item">
+            <div class="health-label">Transactions</div>
+            <div class="health-value" id="health-txns">&mdash;</div>
+            <div class="health-status health-ok" id="health-txns-status">&#x2713; OK</div>
+          </div>
+          <div class="health-item">
+            <div class="health-label">Users</div>
+            <div class="health-value" id="health-users">&mdash;</div>
+            <div class="health-status health-ok">&#x2713; OK</div>
+          </div>
+          <div class="health-item">
+            <div class="health-label">Products</div>
+            <div class="health-value" id="health-products">&mdash;</div>
+            <div class="health-status health-ok">&#x2713; OK</div>
+          </div>
+          <div class="health-item">
+            <div class="health-label">Failed Txns</div>
+            <div class="health-value" id="health-failed">&mdash;</div>
+            <div class="health-status" id="health-failed-status">&#x2713; OK</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted-lt);
+                      margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">
+            Anomaly Detection
+          </div>
+          <div id="anomalyList">
+            <div style="text-align:center;color:var(--muted-lt);padding:16px;font-size:12px;">
+              Running checks&hellip;
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /app-shell -->
+
+<script>
+const API_URL = 'backend/reports.php';
+
+// ── Greeting & live clock ──────────────────────────────────
+(function () {
+  const greet  = document.getElementById('greetingText');
+  const dateEl = document.getElementById('greetingDate');
+  const liveEl = document.getElementById('liveTime');
+  const name   = localStorage.getItem('user_name') || 'Analyst User';
+  const first  = name.split(' ')[0];
+  const h      = new Date().getHours();
+
+  greet.textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + ', ' + first;
+  dateEl.textContent = new Date().toLocaleDateString('en-US', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+
+  const tick = () => {
+    liveEl.textContent = 'LIVE \u00B7 ' + new Date().toLocaleTimeString('en-US', { hour12: false });
+  };
+  tick(); setInterval(tick, 1000);
+
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('userFullName').textContent       = name;
+  document.getElementById('userAvatarInitials').textContent = initials;
+  document.getElementById('sidebarUserName').textContent    = name;
+})();
+
+// ── Default date range: last 30 days ──────────────────────
+(function () {
+  const today = new Date();
+  const from  = new Date(today);
+  from.setDate(from.getDate() - 30);
+  document.getElementById('exportDateTo').value   = today.toISOString().split('T')[0];
+  document.getElementById('exportDateFrom').value = from.toISOString().split('T')[0];
+})();
+
+// ── Mobile sidebar ────────────────────────────────────────
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const sidebar      = document.getElementById('sidebar');
+const overlay      = document.getElementById('sidebarOverlay');
+hamburgerBtn.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+});
+overlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('open');
+});
+
+// ── Chart.js defaults ─────────────────────────────────────
+Chart.defaults.color       = 'rgba(232,245,238,0.50)';
+Chart.defaults.borderColor = 'rgba(82,183,136,0.10)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size   = 11;
+
+let snapshotChartInst = null;
+
+// ═════════════════════════════════════════════════════════
+//  MAIN FETCH
+// ═════════════════════════════════════════════════════════
+async function loadReports() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('errorBanner').style.display   = 'none';
+  try {
+    const res = await fetch(API_URL + '?action=reports_overview&t=' + Date.now(), {
+    credentials: 'include'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error && !data.scorecard) throw new Error(data.error);
+
+    renderScorecard(data.scorecard);
+    renderActivityFeed(data.recent_activity);
+    renderWeeklyHighlights(data.weekly);
+    renderSnapshotChart(data.daily_revenue);
+    renderTopProductsWeek(data.top_products_week);
+    renderDataHealth(data.health);
+    document.getElementById('lastChecked').textContent =
+      new Date().toLocaleTimeString('en-US', { hour12: false });
+
+  } catch (err) {
+    console.error('Reports load error:', err);
+    document.getElementById('errorBanner').style.display = 'flex';
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// ── Scorecard ─────────────────────────────────────────────
+function renderScorecard(sc) {
+  const rev = sc.total_revenue;
+  document.getElementById('sc-revenue').textContent =
+    rev >= 1e6  ? '$' + (rev / 1e6).toFixed(2) + 'M' :
+    rev >= 1000 ? '$' + (rev / 1000).toFixed(1) + 'k' :
+                  '$' + rev.toFixed(2);
+  document.getElementById('sc-revenue-sub').textContent = 'all time · completed';
+  document.getElementById('sc-orders').textContent      = sc.total_orders.toLocaleString();
+  document.getElementById('sc-orders-sub').textContent  = sc.completed_orders + ' completed';
+  document.getElementById('sc-products').textContent    = sc.total_products;
+  document.getElementById('sc-products-sub').textContent= 'in catalog';
+  document.getElementById('sc-users').textContent       = sc.total_users.toLocaleString();
+  document.getElementById('sc-users-sub').textContent   = sc.active_users + ' active this week';
+}
+
+// ── Activity Feed ─────────────────────────────────────────
+function renderActivityFeed(activity) {
+  const el = document.getElementById('activityFeed');
+  if (!activity || !activity.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted-lt);padding:24px;font-size:12px;">No recent activity.</div>';
+    return;
+  }
+
+  let showAll = false;
+  const maxVisible = 5;
+
+  function render() {
+    const visible = showAll ? activity : activity.slice(0, maxVisible);
+    el.innerHTML = visible.map(a => {
+      const dotClass = a.type === 'completed' ? 'feed-dot-green'
+                     : a.type === 'failed'    ? 'feed-dot-red'
+                     : a.type === 'pending'   ? 'feed-dot-orange'
+                     : 'feed-dot-blue';
+      return `
+        <div class="feed-item">
+          <div class="feed-dot ${dotClass}"></div>
+          <div class="feed-text">${escHtml(a.message)}</div>
+          <div class="feed-time">${formatTimeAgo(a.created_at)}</div>
+        </div>`;
+    }).join('');
+
+    if (activity.length > maxVisible) {
+      el.innerHTML += `
+        <div style="text-align:center;padding:12px 0 4px;">
+          <button onclick="this.closest('#activityFeed') && (showAll = !showAll)"
+            id="feedToggleBtn"
+            style="background:rgba(82,183,136,0.08);border:1px solid rgba(82,183,136,0.2);
+                   border-radius:6px;color:var(--accent);font-family:'DM Mono',monospace;
+                   font-size:11px;padding:6px 18px;cursor:pointer;transition:all 0.2s;">
+            ${showAll ? '▲ Show Less' : '▼ Show All ' + activity.length + ' events'}
+          </button>
+        </div>`;
+
+      document.getElementById('feedToggleBtn').addEventListener('click', () => {
+        showAll = !showAll;
+        render();
+      });
+    }
+  }
+
+  render();
+}
+
+// ── Weekly Highlights ─────────────────────────────────────
+function renderWeeklyHighlights(w) {
+  const el = document.getElementById('weeklyHighlights');
+  if (!w) { el.innerHTML = ''; return; }
+
+  const fmtRev = v => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + parseFloat(v).toFixed(2);
+
+  const items = [
+    { icon: '$',        label: 'Revenue This Week',   value: fmtRev(w.revenue),   change: w.revenue_change },
+    { icon: '&#x2023;', label: 'Orders This Week',    value: w.orders,            change: w.orders_change  },
+    { icon: '&#x25C9;', label: 'New Users This Week', value: w.new_users,         change: null             },
+    { icon: '&#x2605;', label: 'Best Product',        value: w.best_product || '—', change: null           },
+  ];
+
+  el.innerHTML = items.map(item => `
+    <div class="wk-row">
+      <div class="wk-left">
+        <span class="wk-icon">${item.icon}</span>
+        <span class="wk-label">${item.label}</span>
+      </div>
+      <div class="wk-right">
+        <span class="wk-value">${item.value}</span>
+        ${item.change !== null
+          ? `<span class="wk-change ${item.change >= 0 ? 'wk-up' : 'wk-down'}">
+               ${item.change >= 0 ? '&#x2191;' : '&#x2193;'} ${Math.abs(item.change)}%
+             </span>`
+          : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ── Revenue Snapshot Chart ────────────────────────────────
+function renderSnapshotChart(daily) {
+  if (!daily || !daily.length) return;
+  const labels = daily.map(d => {
+    const dt = new Date(d.date + 'T00:00:00');
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  const values = daily.map(d => parseFloat(d.revenue));
+  const ctx    = document.getElementById('snapshotChart').getContext('2d');
+  const grad   = ctx.createLinearGradient(0, 0, 0, 165);
+  grad.addColorStop(0, 'rgba(82,183,136,0.32)');
+  grad.addColorStop(1, 'rgba(82,183,136,0.00)');
+  if (snapshotChartInst) snapshotChartInst.destroy();
+  snapshotChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#52B788', borderWidth: 2,
+        backgroundColor: grad, fill: true, tension: 0.4,
+        pointRadius: 0, pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#52B788',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)',
+          borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 10,
+          callbacks: {
+            label: ctx => '  $' + ctx.raw.toLocaleString('en-US', { minimumFractionDigits: 2 })
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false }, border: { display: false },
+          ticks: { maxTicksLimit: 7, padding: 6 }
+        },
+        y: {
+          grid: { color: 'rgba(82,183,136,0.06)' }, border: { display: false },
+          ticks: { callback: v => '$' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v) }
+        }
+      }
+    }
+  });
+}
+
+// ── Top Products This Week ────────────────────────────────
+function renderTopProductsWeek(products) {
+  const el = document.getElementById('topProductsWeek');
+  if (!products || !products.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted-lt);padding:24px;font-size:12px;">No sales this week yet.</div>';
+    return;
+  }
+  const max = parseFloat(products[0].revenue);
+  el.innerHTML = products.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:9px 0;
+                border-bottom:1px solid rgba(82,183,136,0.06);">
+      <div style="width:20px;height:20px;border-radius:50%;
+                  background:rgba(82,183,136,0.15);border:1px solid rgba(82,183,136,0.25);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:9px;color:var(--accent);flex-shrink:0;
+                  font-family:'DM Mono',monospace;">${i + 1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;color:var(--text);font-weight:500;
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${escHtml(p.product_name)}
+        </div>
+        <div style="height:3px;background:rgba(82,183,136,0.1);border-radius:2px;margin-top:4px;">
+          <div style="height:100%;
+                      width:${Math.round((parseFloat(p.revenue) / max) * 100)}%;
+                      background:var(--accent);border-radius:2px;"></div>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--text);
+                  font-family:'DM Mono',monospace;flex-shrink:0;">
+        $${parseFloat(p.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+      </div>
+    </div>`).join('');
+}
+
+// ── Data Health ───────────────────────────────────────────
+function renderDataHealth(health) {
+  if (!health) return;
+  document.getElementById('health-txns').textContent     = (health.total_transactions ?? 0).toLocaleString();
+  document.getElementById('health-users').textContent    = (health.total_users ?? 0).toLocaleString();
+  document.getElementById('health-products').textContent = (health.total_products ?? 0).toLocaleString();
+  document.getElementById('health-failed').textContent   = (health.failed_transactions ?? 0).toLocaleString();
+
+  const failedPct = health.total_transactions > 0
+    ? (health.failed_transactions / health.total_transactions) * 100 : 0;
+
+  const failedEl = document.getElementById('health-failed-status');
+  if (failedPct > 20) {
+    failedEl.textContent = '\u26A0 High failure rate';
+    failedEl.className   = 'health-status health-err';
+  } else if (failedPct > 10) {
+    failedEl.textContent = '\u26A0 Monitor closely';
+    failedEl.className   = 'health-status health-warn';
+  } else {
+    failedEl.textContent = '\u2713 OK';
+    failedEl.className   = 'health-status health-ok';
+  }
+
+  const anomalies = [];
+  if (health.failed_transactions > 0) {
+    anomalies.push({
+      icon: failedPct > 20 ? '&#x26A0;' : '&#x2139;',
+      cls:  failedPct > 20 ? 'health-err' : 'health-warn',
+      msg:  `${health.failed_transactions} failed transaction${health.failed_transactions !== 1 ? 's' : ''} (${failedPct.toFixed(1)}% of total)`
+    });
+  }
+  if (health.pending_transactions > 0) {
+    anomalies.push({
+      icon: '&#x2139;', cls: 'health-warn',
+      msg: `${health.pending_transactions} pending transaction${health.pending_transactions !== 1 ? 's' : ''} awaiting completion`
+    });
+  }
+  if (health.null_product_txns > 0) {
+    anomalies.push({
+      icon: '&#x26A0;', cls: 'health-warn',
+      msg: `${health.null_product_txns} transaction${health.null_product_txns !== 1 ? 's' : ''} with missing product name`
+    });
+  }
+  if (health.null_customer_txns > 0) {
+    anomalies.push({
+      icon: '&#x26A0;', cls: 'health-warn',
+      msg: `${health.null_customer_txns} transaction${health.null_customer_txns !== 1 ? 's' : ''} with missing customer name`
+    });
+  }
+  if (health.users_never_logged_in > 0) {
+    anomalies.push({
+      icon: '&#x2139;', cls: 'health-ok',
+      msg: `${health.users_never_logged_in} user${health.users_never_logged_in !== 1 ? 's' : ''} have never logged in`
+    });
+  }
+
+  const anomalyEl = document.getElementById('anomalyList');
+  if (!anomalies.length) {
+    anomalyEl.innerHTML = `
+      <div class="anomaly-row">
+        <span class="anomaly-icon">&#x2705;</span>
+        <span class="health-ok">All checks passed — no anomalies detected</span>
+      </div>`;
+  } else {
+    anomalyEl.innerHTML = anomalies.map(a => `
+      <div class="anomaly-row">
+        <span class="anomaly-icon ${a.cls}">${a.icon}</span>
+        <span class="${a.cls}">${a.msg}</span>
+      </div>`).join('');
+  }
+}
+
+// ── Export Center ─────────────────────────────────────────
+function getDateRange() {
+  return {
+    from: document.getElementById('exportDateFrom').value,
+    to:   document.getElementById('exportDateTo').value,
+  };
+}
+
+function downloadCsv(filename, rows) {
+  const csv  = rows.map(r =>
+    r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(',')
+  ).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function fetchExport(type) {
+  const { from, to } = getDateRange();
+  const res = await fetch(`${API_URL}?action=export&type=${type}&from=${from}&to=${to}&t=${Date.now()}`, {
+    credentials: 'include'});
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return await res.json();
+}
+
+document.getElementById('exportTransactions').addEventListener('click', async () => {
+  const data = await fetchExport('transactions');
+  if (!data.rows) return;
+  downloadCsv('transactions_report.csv', [
+    ['TX ID','Customer','Product','Date','Status','Payment Method','Amount'],
+    ...data.rows.map(r => [r.tx_ref, r.customer_name, r.product_name,
+      r.formatted_date, r.status, r.payment_method, r.total_amount])
+  ]);
+});
+
+document.getElementById('exportProducts').addEventListener('click', async () => {
+  const data = await fetchExport('products');
+  if (!data.rows) return;
+  downloadCsv('product_performance_report.csv', [
+    ['Product','Units Sold','Total Revenue','Avg Order Value','Revenue Share %'],
+    ...data.rows.map(r => [r.product_name, r.units_sold, r.revenue,
+      r.avg_order_value, r.revenue_share])
+  ]);
+});
+
+document.getElementById('exportRevenue').addEventListener('click', async () => {
+  const data = await fetchExport('revenue');
+  if (!data.rows) return;
+  downloadCsv('monthly_revenue_report.csv', [
+    ['Month','Orders','Revenue','Avg Order Value'],
+    ...data.rows.map(r => [r.month_label, r.order_count, r.revenue, r.avg_order])
+  ]);
+});
+
+document.getElementById('exportSummary').addEventListener('click', async () => {
+  const data = await fetchExport('summary');
+  if (!data.rows) return;
+  downloadCsv('full_summary_report.csv', [
+    ['Metric','Value'],
+    ...data.rows.map(r => [r.metric, r.value])
+  ]);
+});
+
+// ── Date Range Controls ───────────────────────────────────
+document.getElementById('applyDateRange').addEventListener('click', () => {
+  const { from, to } = getDateRange();
+  if (!from || !to) return;
+  const f = new Date(from + 'T00:00:00').toLocaleDateString('en-US',
+    { month:'short', day:'numeric', year:'numeric' });
+  const t = new Date(to   + 'T00:00:00').toLocaleDateString('en-US',
+    { month:'short', day:'numeric', year:'numeric' });
+  document.getElementById('dateRangeStatus').textContent =
+    '\u2713 Export range set: ' + f + ' \u2013 ' + t;
+});
+
+document.getElementById('resetDateRange').addEventListener('click', () => {
+  const today = new Date();
+  const from  = new Date(today);
+  from.setDate(from.getDate() - 30);
+  document.getElementById('exportDateTo').value   = today.toISOString().split('T')[0];
+  document.getElementById('exportDateFrom').value = from.toISOString().split('T')[0];
+  document.getElementById('dateRangeStatus').textContent = '';
+});
+
+// ── Helpers ───────────────────────────────────────────────
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return '—';
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60)    return diff + 's ago';
+  if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+function escHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+const logoutModal    = document.getElementById('logoutModal');
+const logoutBtn      = document.getElementById('logoutBtn');
+const avatarLogout   = document.getElementById('avatarLogout');
+const modalCancelBtn = document.getElementById('modalCancelBtn');
+const modalConfirmBtn= document.getElementById('modalConfirmBtn');
+
+logoutBtn.addEventListener('click',    () => logoutModal.classList.add('active'));
+avatarLogout.addEventListener('click', () => logoutModal.classList.add('active'));
+modalCancelBtn.addEventListener('click',() => logoutModal.classList.remove('active'));
+logoutModal.addEventListener('click',  e => { if (e.target === logoutModal) logoutModal.classList.remove('active'); });
+modalConfirmBtn.addEventListener('click', async () => {
+  modalConfirmBtn.textContent = 'Signing out…';
+  modalConfirmBtn.disabled = true;
+  try { await fetch('backend/reports.php?action=logout', { credentials: 'include' }); } catch(_) {}
+  localStorage.clear();
+  window.location.href = 'index.html';
+});
+
+document.getElementById('refreshBtn').addEventListener('click', loadReports);
+loadReports();
+</script>
+</body>
+</html>

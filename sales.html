@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insightify — Sales Intelligence</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ══ LOGOUT MODAL ═══════════════════════════════ -->
+  <div class="modal-backdrop" id="logoutModal">
+    <div class="modal-card">
+      <div class="modal-icon">&#x23FB;</div>
+      <h3 class="modal-title">Sign Out?</h3>
+      <p class="modal-body">You'll be returned to the login page.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modalCancelBtn">Cancel</button>
+        <button class="btn-modal-confirm" id="modalConfirmBtn">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hamburger (mobile) -->
+  <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">&#x2630;</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading Sales Intelligence&hellip;</div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ══ SIDEBAR ══════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">&#x2726;</div>
+        <span class="sidebar-logo-text">Insightify</span>
+      </div>
+
+      <span class="sidebar-section-label">Navigation</span>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a class="nav-link" href="dashboard.html"><span class="nav-icon">&#x25C8;</span> Executive Summary</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="sales.html"><span class="nav-icon">&#x27E1;</span> Sales Intelligence</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="product.html"><span class="nav-icon">&#x2B21;</span> Product Performance</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="reports.html"><span class="nav-icon">&#x25C9;</span> Reports &amp; Overview</a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="nav-link" style="cursor:pointer;">
+          <span class="nav-icon">&#x2299;</span>
+          <div>
+            <div style="font-size:12.5px;color:var(--text);" id="sidebarUserName">Analyst User</div>
+            <div style="font-size:10.5px;color:var(--muted-lt);font-family:'DM Mono',monospace;">Pro Plan</div>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn" title="Sign out">
+          <span class="logout-icon">&#x23FB;</span>
+          <span class="logout-label">Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ HEADER ════════════════════════════════════ -->
+    <header class="top-header">
+      <div class="header-greeting">
+        <h2 id="greetingText">Good morning, Analyst</h2>
+        <span id="greetingDate"></span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-refresh" id="refreshBtn" title="Refresh data">&#x21BA;</button>
+        <div class="user-badge" id="avatarLogout" title="Sign out">
+          <div class="user-avatar" id="userAvatarInitials">J</div>
+          <div class="user-info">
+            <div class="user-fullname" id="userFullName">Jesryl Orosio</div>
+            <div class="user-role">Analyst</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ MAIN ══════════════════════════════════════ -->
+    <main class="main-content">
+
+      <div class="page-title">
+        <h1>Sales <em>Intelligence</em></h1>
+        <span class="page-title-meta" id="liveTime"></span>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Total Orders <span style="font-size:14px;opacity:0.5;">&#x2023;</span></div>
+          <div class="kpi-value" id="si-total-orders">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="si-orders-badge">&mdash;</span>
+            <span class="kpi-sub">this month</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Best Product <span style="font-size:14px;opacity:0.5;">&#x2605;</span></div>
+          <div class="kpi-value" id="si-best-product" style="font-size:16px;line-height:1.3;">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="si-best-badge">&mdash;</span>
+            <span class="kpi-sub">units sold</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Avg. Order Value <span style="font-size:14px;opacity:0.5;">&#x2300;</span></div>
+          <div class="kpi-value" id="si-avg-order">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="si-avg-badge">&mdash;</span>
+            <span class="kpi-sub">per transaction</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Total Customers <span style="font-size:14px;opacity:0.5;">&#x25A3;</span></div>
+          <div class="kpi-value" id="si-total-customers">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="si-customers-badge">&mdash;</span>
+            <span class="kpi-sub">unique buyers</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="analytics-grid">
+
+        <!-- Revenue by Product -->
+        <div class="glass-card chart-main">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Revenue by Product</div>
+              <div class="chart-subtitle">Top performing products &middot; all time</div>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap" style="height:280px;">
+            <canvas id="revenueByProductChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Order Status Breakdown -->
+        <div class="glass-card chart-donut">
+          <div class="chart-header" style="margin-bottom:12px;">
+            <div>
+              <div class="chart-title">Order Status</div>
+              <div class="chart-subtitle">Breakdown &middot; all time</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="statusDonutChart" style="max-width:200px;max-height:200px;"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" id="statusDonutCenter">&mdash;</div>
+              <div class="donut-center-lbl">total orders</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="statusDonutLegend"></div>
+        </div>
+
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="analytics-grid">
+
+        <!-- Sales by Day of Week -->
+        <div class="glass-card chart-main">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Sales by Day of Week</div>
+              <div class="chart-subtitle">Average revenue per day &middot; all time</div>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap" style="height:240px;">
+            <canvas id="salesByDayChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Customers -->
+        <div class="glass-card chart-donut" style="overflow:hidden;">
+          <div class="chart-header" style="margin-bottom:12px;">
+            <div>
+              <div class="chart-title">Top Customers</div>
+              <div class="chart-subtitle">By total revenue &middot; all time</div>
+            </div>
+          </div>
+          <div id="topCustomersList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:280px;">
+            <div style="text-align:center;color:var(--muted-lt);padding:20px;font-size:12px;">Loading&hellip;</div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div><!-- /app-shell -->
+
+<script>
+const API_URL = 'backend/sales.php';
+
+// ── Greeting & clock ──────────────────────────────────────
+(function() {
+  const greet  = document.getElementById('greetingText');
+  const dateEl = document.getElementById('greetingDate');
+  const liveEl = document.getElementById('liveTime');
+  const name   = localStorage.getItem('user_name') || 'Analyst';
+  const first  = name.split(' ')[0];
+  const h      = new Date().getHours();
+  greet.textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + ', ' + first;
+  dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  function tick() { liveEl.textContent = 'LIVE \u00B7 ' + new Date().toLocaleTimeString('en-US', { hour12: false }); }
+  tick(); setInterval(tick, 1000);
+
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('userFullName').textContent       = name;
+  document.getElementById('userAvatarInitials').textContent = initials;
+  document.getElementById('sidebarUserName').textContent    = name;
+})();
+
+// ── Mobile sidebar ────────────────────────────────────────
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const sidebar      = document.getElementById('sidebar');
+const overlay      = document.getElementById('sidebarOverlay');
+hamburgerBtn.addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+
+// ── Chart.js defaults ─────────────────────────────────────
+Chart.defaults.color       = 'rgba(232,245,238,0.50)';
+Chart.defaults.borderColor = 'rgba(82,183,136,0.10)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size   = 11;
+
+let productChartInst = null;
+let statusChartInst  = null;
+let dayChartInst     = null;
+
+const DONUT_COLORS = ['#52B788','#e0a85c','#e05c5c','#2d8a5e','#a8d8be'];
+
+// ── Load Sales Intelligence Data ──────────────────────────
+async function loadSalesIntelligence() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  try {
+    const res = await fetch('backend/sales.php?action=sales_intelligence', { credentials: 'include' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    renderKPIs(data);
+    renderRevenueByProduct(data.revenue_by_product);
+    renderStatusDonut(data.order_status);
+    renderSalesByDay(data.sales_by_day);
+    renderTopCustomers(data.top_customers);
+
+  } catch (err) {
+    console.error('Sales Intelligence load error:', err);
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// ── KPIs ──────────────────────────────────────────────────
+function renderKPIs(data) {
+  document.getElementById('si-total-orders').textContent    = (data.kpis.total_orders || 0).toLocaleString();
+  document.getElementById('si-orders-badge').textContent    = '\u2191 this month';
+
+  const best = data.revenue_by_product?.[0];
+  document.getElementById('si-best-product').textContent    = best ? best.product_name : '\u2013';
+  document.getElementById('si-best-badge').textContent      = best ? '\u2605 ' + (data.kpis.best_units || 0) + ' units' : '\u2013';
+
+  document.getElementById('si-avg-order').textContent       = '$' + parseFloat(data.kpis.avg_order_value || 0).toFixed(0);
+  document.getElementById('si-avg-badge').textContent       = '\u2191 avg value';
+
+  document.getElementById('si-total-customers').textContent = (data.kpis.total_customers || 0).toLocaleString();
+  document.getElementById('si-customers-badge').textContent = '\u25A3 unique buyers';
+}
+
+// ── Revenue by Product ────────────────────────────────────
+function renderRevenueByProduct(products) {
+  if (!products || !products.length) return;
+  const labels   = products.map(p => p.product_name);
+  const revenues = products.map(p => parseFloat(p.revenue) / 1000);
+  const ctx = document.getElementById('revenueByProductChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 400, 0);
+  grad.addColorStop(0, 'rgba(82,183,136,0.85)');
+  grad.addColorStop(1, 'rgba(45,138,94,0.55)');
+  if (productChartInst) productChartInst.destroy();
+  productChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Revenue',
+        data: revenues,
+        backgroundColor: grad,
+        borderColor: 'rgba(82,183,136,0.8)',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 12,
+          callbacks: { label(ctx) { return '  Revenue: $' + ctx.raw.toFixed(1) + 'k'; } }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(82,183,136,0.06)' }, border: { display: false },
+             ticks: { callback(v) { return '$' + v + 'k'; } } },
+        y: { grid: { display: false }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// ── Status Donut ──────────────────────────────────────────
+function renderStatusDonut(statuses) {
+  if (!statuses || !statuses.length) return;
+  const colors = { completed: '#52B788', pending: '#e0a85c', failed: '#e05c5c', returned: '#a8d8be' };
+  const labels   = statuses.map(s => s.status.charAt(0).toUpperCase() + s.status.slice(1));
+  const counts   = statuses.map(s => parseInt(s.count));
+  const bgColors = statuses.map(s => colors[s.status] || '#888');
+  const total    = counts.reduce((a, b) => a + b, 0);
+  document.getElementById('statusDonutCenter').textContent = total.toLocaleString();
+  document.getElementById('statusDonutLegend').innerHTML = statuses.map((s, i) => `
+    <div class="donut-legend-row">
+      <span class="donut-legend-label">
+        <span class="donut-legend-swatch" style="background:${bgColors[i]};"></span>
+        ${labels[i]}
+      </span>
+      <span class="donut-legend-pct">${s.count}</span>
+    </div>
+  `).join('');
+  if (statusChartInst) statusChartInst.destroy();
+  statusChartInst = new Chart(document.getElementById('statusDonutChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: counts, backgroundColor: bgColors, borderColor: 'rgba(5,18,12,0.85)', borderWidth: 3, hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: true, cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 10,
+          callbacks: { label(ctx) { return '  ' + ctx.label + ': ' + ctx.raw; } }
+        }
+      }
+    }
+  });
+}
+
+// ── Sales by Day of Week ──────────────────────────────────
+function renderSalesByDay(days) {
+  if (!days || !days.length) return;
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  // MySQL DAYOFWEEK: 1=Sunday ... 7=Saturday, so index = day_num - 1
+  const filled = dayNames.map((d, i) => {
+    const found = days.find(r => parseInt(r.day_num) === i + 1);
+    return found ? parseFloat(found.avg_revenue) / 1000 : 0;
+  });
+  const ctx = document.getElementById('salesByDayChart').getContext('2d');
+  if (dayChartInst) dayChartInst.destroy();
+  dayChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: dayNames,
+      datasets: [{
+        label: 'Avg Revenue',
+        data: filled,
+        backgroundColor: filled.map(v => v === Math.max(...filled) ? '#52B788' : 'rgba(82,183,136,0.35)'),
+        borderColor: 'rgba(82,183,136,0.6)',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 12,
+          callbacks: { label(ctx) { return '  Avg Revenue: $' + ctx.raw.toFixed(1) + 'k'; } }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false } },
+        y: { grid: { color: 'rgba(82,183,136,0.06)' }, border: { display: false },
+             ticks: { callback(v) { return '$' + v + 'k'; } } }
+      }
+    }
+  });
+}
+
+// ── Top Customers ─────────────────────────────────────────
+function renderTopCustomers(customers) {
+  const el = document.getElementById('topCustomersList');
+  if (!customers || !customers.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted-lt);padding:20px;font-size:12px;">No customer data yet.</div>';
+    return;
+  }
+  const max = parseFloat(customers[0].total_revenue);
+  el.innerHTML = customers.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(82,183,136,0.06);">
+      <div style="width:22px;height:22px;border-radius:50%;background:rgba(82,183,136,0.15);border:1px solid rgba(82,183,136,0.25);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(c.customer_name)}</div>
+        <div style="height:3px;background:rgba(82,183,136,0.12);border-radius:2px;margin-top:4px;">
+          <div style="height:100%;width:${Math.round((parseFloat(c.total_revenue)/max)*100)}%;background:var(--accent);border-radius:2px;"></div>
+        </div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);flex-shrink:0;">$${parseFloat(c.total_revenue).toLocaleString('en-US',{minimumFractionDigits:0})}</div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Logout ────────────────────────────────────────────────
+const logoutModal     = document.getElementById('logoutModal');
+const logoutBtn       = document.getElementById('logoutBtn');
+const avatarLogout    = document.getElementById('avatarLogout');
+const modalCancelBtn  = document.getElementById('modalCancelBtn');
+const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+function showLogoutModal() { logoutModal.classList.add('active'); }
+function hideLogoutModal() { logoutModal.classList.remove('active'); }
+logoutBtn.addEventListener('click', showLogoutModal);
+avatarLogout.addEventListener('click', showLogoutModal);
+modalCancelBtn.addEventListener('click', hideLogoutModal);
+logoutModal.addEventListener('click', e => { if (e.target === logoutModal) hideLogoutModal(); });
+modalConfirmBtn.addEventListener('click', async () => {
+  modalConfirmBtn.textContent = 'Signing out\u2026';
+  modalConfirmBtn.disabled = true;
+  try { await fetch('backend/sales.php?action=logout', { credentials: 'include' }); } catch(_) {}
+  localStorage.removeItem('user_name');
+  window.location.href = 'index.html';
+});
+
+// ── Refresh ───────────────────────────────────────────────
+document.getElementById('refreshBtn').addEventListener('click', () => loadSalesIntelligence());
+
+// ── Init ──────────────────────────────────────────────────
+loadSalesIntelligence();
+</script>
+</body>
+</html>

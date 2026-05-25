@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insightify — Product Performance</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ══ LOGOUT MODAL ═══════════════════════════════ -->
+  <div class="modal-backdrop" id="logoutModal">
+    <div class="modal-card">
+      <div class="modal-icon">&#x23FB;</div>
+      <h3 class="modal-title">Sign Out?</h3>
+      <p class="modal-body">You'll be returned to the login page.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modalCancelBtn">Cancel</button>
+        <button class="btn-modal-confirm" id="modalConfirmBtn">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hamburger (mobile) -->
+  <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">&#x2630;</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading Product Performance&hellip;</div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ══ SIDEBAR ══════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">&#x2726;</div>
+        <span class="sidebar-logo-text">Insightify</span>
+      </div>
+
+      <span class="sidebar-section-label">Navigation</span>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a class="nav-link" href="dashboard.html"><span class="nav-icon">&#x25C8;</span> Executive Summary</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="sales.html"><span class="nav-icon">&#x27E1;</span> Sales Intelligence</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="product.html"><span class="nav-icon">&#x2B21;</span> Product Performance</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="reports.html"><span class="nav-icon">&#x25C9;</span> Reports &amp; Overview</a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="nav-link" style="cursor:pointer;">
+          <span class="nav-icon">&#x2299;</span>
+          <div>
+            <div style="font-size:12.5px;color:var(--text);" id="sidebarUserName">Analyst User</div>
+            <div style="font-size:10.5px;color:var(--muted-lt);font-family:'DM Mono',monospace;">Pro Plan</div>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn" title="Sign out">
+          <span class="logout-icon">&#x23FB;</span>
+          <span class="logout-label">Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ HEADER ════════════════════════════════════ -->
+    <header class="top-header">
+      <div class="header-greeting">
+        <h2 id="greetingText">Good morning, Analyst</h2>
+        <span id="greetingDate"></span>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-refresh" id="refreshBtn" title="Refresh data">&#x21BA;</button>
+        <div class="user-badge" id="avatarLogout" title="Sign out">
+          <div class="user-avatar" id="userAvatarInitials">A</div>
+          <div class="user-info">
+            <div class="user-fullname" id="userFullName">Analyst User</div>
+            <div class="user-role">Analyst</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ MAIN ══════════════════════════════════════ -->
+    <main class="main-content">
+
+      <div class="page-title">
+        <h1>Product <em>Performance</em></h1>
+        <span class="page-title-meta" id="liveTime"></span>
+      </div>
+
+      <div class="error-banner" id="errorBanner" style="display:none;">
+        <span>&#x26A0; Could not load product data. Check that your server is running.</span>
+        <button onclick="document.getElementById('errorBanner').style.display='none'">&#x2715;</button>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Total Products <span style="font-size:14px;opacity:0.5;">&#x2B21;</span></div>
+          <div class="kpi-value" id="pp-total-products">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="pp-products-badge">&mdash;</span>
+            <span class="kpi-sub">in catalog</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Top Product <span style="font-size:14px;opacity:0.5;">&#x2605;</span></div>
+          <div class="kpi-value" id="pp-top-product" style="font-size:16px;line-height:1.3;">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="pp-top-badge">&mdash;</span>
+            <span class="kpi-sub">by revenue</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Total Units Sold <span style="font-size:14px;opacity:0.5;">&#x25A3;</span></div>
+          <div class="kpi-value" id="pp-units-sold">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="pp-units-badge">&mdash;</span>
+            <span class="kpi-sub">all time</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Avg. Revenue/Product <span style="font-size:14px;opacity:0.5;">&#x2300;</span></div>
+          <div class="kpi-value" id="pp-avg-rev">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-up" id="pp-avg-badge">&mdash;</span>
+            <span class="kpi-sub">per product</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 1: Revenue by Product + Category Donut -->
+      <div class="analytics-grid">
+
+        <!-- Revenue by Product Bar Chart -->
+        <div class="glass-card chart-main">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Revenue by Product</div>
+              <div class="chart-subtitle">All-time completed sales &middot; sorted by revenue</div>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap" style="height:280px;">
+            <canvas id="revenueByProductChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Units Sold Donut -->
+        <div class="glass-card chart-donut">
+          <div class="chart-header" style="margin-bottom:12px;">
+            <div>
+              <div class="chart-title">Units Sold Share</div>
+              <div class="chart-subtitle">By product &middot; all time</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="unitsDonutChart" style="max-width:200px;max-height:200px;"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" id="unitsDonutCenter">&mdash;</div>
+              <div class="donut-center-lbl">total units sold</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="unitsDonutLegend"></div>
+        </div>
+
+      </div>
+
+      <!-- Row 2: Monthly Trend + Product Leaderboard -->
+      <div class="analytics-grid">
+
+        <!-- Monthly Revenue Trend per Product -->
+        <div class="glass-card chart-main">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Monthly Revenue Trend</div>
+              <div class="chart-subtitle" id="trendSubtitle">Top products &middot; last 6 months</div>
+            </div>
+            <div class="chart-legend" id="trendLegend" style="display:flex;gap:12px;flex-wrap:wrap;"></div>
+          </div>
+          <div class="chart-canvas-wrap" style="height:260px;">
+            <canvas id="productTrendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Product Leaderboard Table -->
+        <div class="glass-card chart-donut" style="overflow:hidden;">
+          <div class="chart-header" style="margin-bottom:12px;">
+            <div>
+              <div class="chart-title">Product Leaderboard</div>
+              <div class="chart-subtitle">Ranked by total revenue</div>
+            </div>
+          </div>
+          <div id="productLeaderboard" style="display:flex;flex-direction:column;gap:0;overflow-y:auto;max-height:300px;">
+            <div style="text-align:center;color:var(--muted-lt);padding:20px;font-size:12px;">Loading&hellip;</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row 3: Full-width Product Detail Table -->
+      <div class="glass-card table-section" style="margin-top:0;">
+        <div class="table-header">
+          <div class="table-title">Product Detail Summary</div>
+          <div class="table-actions">
+            <button class="btn-ghost" id="exportProductCsvBtn">&#x2913; Export</button>
+            <div class="filter-wrap">
+              <button class="btn-ghost" id="filterBtn">&#x21CC; Filter</button>
+              <div class="filter-dropdown" id="filterDropdown">
+                <select class="filter-select" id="statusFilter">
+                  <option value="">All Status</option>
+                  <option value="trending">Trending</option>
+                  <option value="stable">Stable</option>
+                  <option value="declining">Declining</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="how-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Units Sold</th>
+                <th>Total Revenue</th>
+                <th>Avg. Order Value</th>
+                <th>Revenue Share</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted-lt);">Loading products&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /app-shell -->
+
+<script>
+const API_URL = 'backend/product.php';
+
+// ── Greeting & clock ──────────────────────────────────────
+(function() {
+  const greet  = document.getElementById('greetingText');
+  const dateEl = document.getElementById('greetingDate');
+  const liveEl = document.getElementById('liveTime');
+  const name   = localStorage.getItem('user_name') || 'Analyst User';
+  const first  = name.split(' ')[0];
+  const h      = new Date().getHours();
+  greet.textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + ', ' + first;
+  dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  function tick() { liveEl.textContent = 'LIVE \u00B7 ' + new Date().toLocaleTimeString('en-US', { hour12: false }); }
+  tick(); setInterval(tick, 1000);
+
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('userFullName').textContent       = name;
+  document.getElementById('userAvatarInitials').textContent = initials;
+  document.getElementById('sidebarUserName').textContent    = name;
+})();
+
+// ── Mobile sidebar ────────────────────────────────────────
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const sidebar      = document.getElementById('sidebar');
+const overlay      = document.getElementById('sidebarOverlay');
+hamburgerBtn.addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+
+// ── Chart.js defaults ─────────────────────────────────────
+Chart.defaults.color       = 'rgba(232,245,238,0.50)';
+Chart.defaults.borderColor = 'rgba(82,183,136,0.10)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size   = 11;
+
+const PRODUCT_COLORS = [
+  '#52B788','#2d8a5e','rgba(82,183,136,0.55)','#74C69D','#1B4332',
+  '#40916C','#95D5B2','#081C15','#B7E4C7','#D8F3DC'
+];
+
+let revenueChartInst = null;
+let unitsChartInst   = null;
+let trendChartInst   = null;
+let allProducts      = [];
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN FETCH
+// ═══════════════════════════════════════════════════════════
+async function loadProductPerformance() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('errorBanner').style.display   = 'none';
+  try {
+    const res = await fetch('backend/product.php?action=product_performance', {
+    credentials: 'include'});  
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    allProducts = data.products || [];
+
+    renderKPIs(data);
+    renderRevenueByProduct(data.products);
+    renderUnitsDonut(data.products);
+    renderProductTrend(data.monthly_trend);
+    renderLeaderboard(data.products);
+    renderProductTable(data.products);
+
+  } catch (err) {
+    console.error('Product Performance load error:', err);
+    document.getElementById('errorBanner').style.display = 'flex';
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// ── KPIs ──────────────────────────────────────────────────
+function renderKPIs(data) {
+  const products = data.products || [];
+  const totalProducts = products.length;
+  const top = products[0];
+  const totalUnits = products.reduce((s, p) => s + parseInt(p.units_sold), 0);
+  const totalRev   = products.reduce((s, p) => s + parseFloat(p.revenue), 0);
+  const avgRev     = totalProducts > 0 ? totalRev / totalProducts : 0;
+
+  document.getElementById('pp-total-products').textContent = totalProducts;
+  document.getElementById('pp-products-badge').textContent = '\u2B21 ' + totalProducts + ' active';
+
+  document.getElementById('pp-top-product').textContent = top ? top.product_name : '—';
+  document.getElementById('pp-top-badge').textContent   = top ? '$' + parseFloat(top.revenue).toLocaleString('en-US', {minimumFractionDigits:0}) : '—';
+
+  document.getElementById('pp-units-sold').textContent  = totalUnits.toLocaleString();
+  document.getElementById('pp-units-badge').textContent = '\u2191 all time';
+
+  document.getElementById('pp-avg-rev').textContent  = avgRev >= 1000
+    ? '$' + (avgRev / 1000).toFixed(1) + 'k'
+    : '$' + avgRev.toFixed(0);
+  document.getElementById('pp-avg-badge').textContent = '\u2300 avg';
+}
+
+// ── Revenue by Product (Horizontal Bar) ──────────────────
+function renderRevenueByProduct(products) {
+  if (!products || !products.length) return;
+  const labels   = products.map(p => p.product_name);
+  const revenues = products.map(p => parseFloat(p.revenue) / 1000);
+  const ctx = document.getElementById('revenueByProductChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 500, 0);
+  grad.addColorStop(0, 'rgba(82,183,136,0.85)');
+  grad.addColorStop(1, 'rgba(45,138,94,0.45)');
+  if (revenueChartInst) revenueChartInst.destroy();
+  revenueChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Revenue',
+        data: revenues,
+        backgroundColor: products.map((_, i) =>
+          i === 0 ? '#52B788' : `rgba(82,183,136,${0.55 - i * 0.05})`
+        ),
+        borderColor: 'rgba(82,183,136,0.4)',
+        borderWidth: 1,
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 12,
+          callbacks: { label(ctx) { return '  Revenue: $' + ctx.raw.toFixed(1) + 'k'; } }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(82,183,136,0.06)' }, border: { display: false },
+             ticks: { callback(v) { return '$' + v + 'k'; } } },
+        y: { grid: { display: false }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// ── Units Sold Donut ──────────────────────────────────────
+function renderUnitsDonut(products) {
+  if (!products || !products.length) return;
+  const top5    = products.slice(0, 5);
+  const labels  = top5.map(p => p.product_name);
+  const units   = top5.map(p => parseInt(p.units_sold));
+  const colors  = top5.map((_, i) => PRODUCT_COLORS[i]);
+  const total   = products.reduce((s, p) => s + parseInt(p.units_sold), 0);
+
+  document.getElementById('unitsDonutCenter').textContent = total.toLocaleString();
+  document.getElementById('unitsDonutLegend').innerHTML = top5.map((p, i) => `
+    <div class="donut-legend-row">
+      <span class="donut-legend-label">
+        <span class="donut-legend-swatch" style="background:${colors[i]};"></span>${p.product_name}
+      </span>
+      <span class="donut-legend-pct">${p.units_sold}</span>
+    </div>
+  `).join('');
+
+  if (unitsChartInst) unitsChartInst.destroy();
+  unitsChartInst = new Chart(document.getElementById('unitsDonutChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: units, backgroundColor: colors, borderColor: 'rgba(5,18,12,0.85)', borderWidth: 3, hoverBorderColor: '#52B788', hoverBorderWidth: 2, hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: true, cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 10,
+          callbacks: { label(ctx) { return '  ' + ctx.label + ': ' + ctx.raw + ' units'; } }
+        }
+      }
+    }
+  });
+}
+
+// ── Monthly Revenue Trend (Multi-line) ────────────────────
+function renderProductTrend(monthlyTrend) {
+  if (!monthlyTrend || !monthlyTrend.length) return;
+
+  // Build unique labels (months) and unique products
+  const months   = [...new Set(monthlyTrend.map(r => r.month_label))];
+  const products = [...new Set(monthlyTrend.map(r => r.product_name))].slice(0, 5);
+
+  if (months.length >= 2) {
+    document.getElementById('trendSubtitle').textContent =
+      'Top products \u00B7 ' + months[0] + ' \u2013 ' + months[months.length - 1];
+  }
+
+  // Build legend
+  document.getElementById('trendLegend').innerHTML = products.map((p, i) => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${PRODUCT_COLORS[i]};"></span>${p}
+    </div>
+  `).join('');
+
+  const datasets = products.map((product, i) => {
+    const data = months.map(month => {
+      const found = monthlyTrend.find(r => r.product_name === product && r.month_label === month);
+      return found ? parseFloat(found.revenue) / 1000 : 0;
+    });
+    return {
+      label: product,
+      data,
+      borderColor: PRODUCT_COLORS[i],
+      borderWidth: 2,
+      backgroundColor: 'transparent',
+      tension: 0.4,
+      pointRadius: 3,
+      pointBackgroundColor: PRODUCT_COLORS[i],
+      pointBorderColor: 'rgba(5,18,12,0.85)',
+      pointBorderWidth: 2,
+      pointHoverRadius: 5,
+    };
+  });
+
+  const ctx = document.getElementById('productTrendChart').getContext('2d');
+  if (trendChartInst) trendChartInst.destroy();
+  trendChartInst = new Chart(ctx, {
+    type: 'line',
+    data: { labels: months, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 12,
+          callbacks: { label(ctx) { return '  ' + ctx.dataset.label + ': $' + ctx.raw.toFixed(1) + 'k'; } }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(82,183,136,0.06)', drawTicks: false }, border: { display: false }, ticks: { padding: 8 } },
+        y: { grid: { color: 'rgba(82,183,136,0.06)', drawTicks: false }, border: { display: false },
+             ticks: { padding: 10, callback(v) { return '$' + v + 'k'; } } }
+      }
+    }
+  });
+}
+
+// ── Product Leaderboard ───────────────────────────────────
+function renderLeaderboard(products) {
+  const el = document.getElementById('productLeaderboard');
+  if (!products || !products.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted-lt);padding:20px;font-size:12px;">No data.</div>';
+    return;
+  }
+  const maxRev = parseFloat(products[0].revenue);
+  el.innerHTML = products.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(82,183,136,0.06);">
+      <div style="width:22px;height:22px;border-radius:50%;background:rgba(82,183,136,0.15);border:1px solid rgba(82,183,136,0.25);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);flex-shrink:0;">${i + 1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(p.product_name)}</div>
+        <div style="height:3px;background:rgba(82,183,136,0.12);border-radius:2px;margin-top:5px;">
+          <div style="height:100%;width:${Math.round((parseFloat(p.revenue)/maxRev)*100)}%;background:${PRODUCT_COLORS[i % PRODUCT_COLORS.length]};border-radius:2px;transition:width 0.6s ease;"></div>
+        </div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text);flex-shrink:0;">
+        $${parseFloat(p.revenue).toLocaleString('en-US',{minimumFractionDigits:0})}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Product Table ─────────────────────────────────────────
+function statusTag(s) {
+  if (s === 'trending')  return '<span class="status-badge status-success"><span class="status-dot"></span>Trending</span>';
+  if (s === 'declining') return '<span class="status-badge status-failed"><span class="status-dot"></span>Declining</span>';
+  return '<span class="status-badge status-pending"><span class="status-dot"></span>Stable</span>';
+}
+
+function renderProductTable(products) {
+  const tbody = document.getElementById('productTableBody');
+  if (!products || !products.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted-lt);">No product data found.</td></tr>';
+    return;
+  }
+  const totalRev = products.reduce((s, p) => s + parseFloat(p.revenue), 0);
+  tbody.innerHTML = products.map((p, i) => {
+    const rev     = parseFloat(p.revenue);
+    const units   = parseInt(p.units_sold);
+    const avg     = units > 0 ? rev / units : 0;
+    const share   = totalRev > 0 ? ((rev / totalRev) * 100).toFixed(1) : '0.0';
+    const status  = p.status || 'stable';
+    return `
+      <tr>
+        <td><span style="color:var(--muted-lt);font-family:'DM Mono',monospace;font-size:11px;">${i + 1}</span></td>
+        <td><span class="tx-customer">${escHtml(p.product_name)}</span></td>
+        <td><span style="font-family:'DM Mono',monospace;font-size:12.5px;">${units.toLocaleString()}</span></td>
+        <td><span class="tx-amount">$${rev.toLocaleString('en-US',{minimumFractionDigits:2})}</span></td>
+        <td><span style="font-family:'DM Mono',monospace;font-size:12.5px;color:var(--text-dim);">$${avg.toFixed(2)}</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:4px;background:rgba(82,183,136,0.12);border-radius:2px;min-width:60px;">
+              <div style="height:100%;width:${share}%;background:var(--accent);border-radius:2px;"></div>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted-lt);width:38px;text-align:right;">${share}%</span>
+          </div>
+        </td>
+        <td>${statusTag(status)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ── Status Filter ─────────────────────────────────────────
+document.getElementById('filterBtn').addEventListener('click', function() {
+  const dropdown  = document.getElementById('filterDropdown');
+  const isVisible = dropdown.style.display === 'flex';
+  dropdown.style.display = isVisible ? 'none' : 'flex';
+  this.style.background  = isVisible ? '' : 'var(--accent-dim)';
+  this.style.color       = isVisible ? '' : 'var(--accent)';
+  this.style.borderColor = isVisible ? '' : 'var(--accent-glow)';
+});
+
+document.addEventListener('click', function(e) {
+  const filterBtn      = document.getElementById('filterBtn');
+  const filterDropdown = document.getElementById('filterDropdown');
+  if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
+    filterDropdown.style.display = 'none';
+    filterBtn.style.background   = '';
+    filterBtn.style.color        = '';
+    filterBtn.style.borderColor  = '';
+  }
+});
+
+document.getElementById('statusFilter').addEventListener('change', function() {
+  const val = this.value;
+  const filtered = val ? allProducts.filter(p => (p.status || 'stable') === val) : allProducts;
+  renderProductTable(filtered);
+  renderLeaderboard(filtered);
+});
+
+// ── CSV Export ────────────────────────────────────────────
+document.getElementById('exportProductCsvBtn').addEventListener('click', () => {
+  if (!allProducts.length) return;
+  const totalRev = allProducts.reduce((s, p) => s + parseFloat(p.revenue), 0);
+  const header   = ['Rank','Product','Units Sold','Total Revenue','Avg Order Value','Revenue Share %','Status'];
+  const rows     = allProducts.map((p, i) => {
+    const rev   = parseFloat(p.revenue);
+    const units = parseInt(p.units_sold);
+    const avg   = units > 0 ? (rev / units).toFixed(2) : '0.00';
+    const share = totalRev > 0 ? ((rev / totalRev) * 100).toFixed(1) : '0.0';
+    return [i + 1, p.product_name, units, rev.toFixed(2), avg, share, p.status || 'stable'];
+  });
+  const csv  = [header, ...rows].map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: 'product_performance.csv' });
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ── Logout ────────────────────────────────────────────────
+const logoutModal     = document.getElementById('logoutModal');
+const logoutBtn       = document.getElementById('logoutBtn');
+const avatarLogout    = document.getElementById('avatarLogout');
+const modalCancelBtn  = document.getElementById('modalCancelBtn');
+const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+function showLogoutModal() { logoutModal.classList.add('active'); }
+function hideLogoutModal() { logoutModal.classList.remove('active'); }
+logoutBtn.addEventListener('click', showLogoutModal);
+avatarLogout.addEventListener('click', showLogoutModal);
+modalCancelBtn.addEventListener('click', hideLogoutModal);
+logoutModal.addEventListener('click', e => { if (e.target === logoutModal) hideLogoutModal(); });
+modalConfirmBtn.addEventListener('click', async () => {
+  modalConfirmBtn.textContent = 'Signing out\u2026';
+  modalConfirmBtn.disabled = true;
+ try { await fetch('backend/product.php?action=logout', { credentials: 'include' }); } catch(_) {}
+  localStorage.removeItem('user_name');
+  window.location.href = 'https://insightify.page.gd/index.html';
+});
+
+// ── Refresh ───────────────────────────────────────────────
+document.getElementById('refreshBtn').addEventListener('click', () => loadProductPerformance());
+setInterval(loadProductPerformance, 5 * 60 * 1000);
+
+// ── Init ──────────────────────────────────────────────────
+loadProductPerformance();
+</script>
+</body>
+</html>

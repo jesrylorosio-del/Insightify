@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insightify — Executive Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <!-- ══ TARGET SETTING MODAL ══════════════════════ -->
+  <div class="modal-backdrop" id="targetModal">
+    <div class="modal-card" style="max-width:380px;">
+      <div class="modal-icon" style="color:var(--accent);">◎</div>
+      <h3 class="modal-title">Set Growth Target</h3>
+      <p class="modal-body">Choose the monthly growth % used to calculate the target line on the Sales Trends chart.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="preset-btn" data-val="5">Conservative 5%</button>
+          <button class="preset-btn" data-val="10">Moderate 10%</button>
+          <button class="preset-btn" data-val="20">Aggressive 20%</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(82,183,136,0.06);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;">
+          <label style="font-size:12px;color:var(--muted-lt);white-space:nowrap;font-family:'DM Mono',monospace;">Custom %</label>
+          <input type="number" id="targetPctInput" min="1" max="200" value="10"
+            style="background:none;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:18px;font-weight:400;width:60px;text-align:center;letter-spacing:-0.5px;" />
+          <span style="font-size:14px;color:var(--muted-lt);">%</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted-lt);text-align:center;font-family:'DM Mono',monospace;" id="targetPreview">
+          Target = previous month x 1.10
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="targetCancelBtn">Cancel</button>
+        <button class="btn-modal-confirm" id="targetApplyBtn" style="background:rgba(82,183,136,0.15);border-color:rgba(82,183,136,0.3);color:var(--accent);">Apply Target</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ IMPORT MODAL ═══════════════════════════════ -->
+  <div class="modal-backdrop" id="importModal">
+    <div class="modal-card import-modal-card">
+      <div class="modal-icon" style="color:var(--accent);text-align:left;">&#x2912;</div>
+      <h3 class="modal-title" style="text-align:left;">Import Transactions</h3>
+      <p class="modal-body" style="text-align:left;margin-bottom:16px;">
+        Upload an <strong>.xlsx</strong>, <strong>.xls</strong>, or <strong>.csv</strong> file.
+        Use the template below to ensure your column headers match exactly.
+      </p>
+
+      <div class="import-drop-zone" id="importDropZone">
+        <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" />
+        <div class="import-drop-icon">&#x1F4C2;</div>
+        <div class="import-drop-text">Drop your file here, or click to browse</div>
+        <div class="import-drop-hint">Supported: .xlsx &middot; .xls &middot; .csv &mdash; max 10 MB</div>
+      </div>
+
+      <div class="import-progress" id="importProgress">
+        <div class="import-spinner"></div>
+        <span id="importProgressText">Parsing file&hellip;</span>
+      </div>
+
+      <div class="import-preview-wrap" id="importPreviewWrap">
+        <div class="import-stats" id="importStats"></div>
+        <div class="import-err-list" id="importErrList" style="display:none;"></div>
+        <div class="import-table-scroll" id="importTableScroll" style="display:none;">
+          <table class="import-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Customer</th><th>Product</th>
+                <th>Date</th><th>Status</th><th>Method</th>
+                <th style="text-align:right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="importTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px;justify-content:space-between;align-items:center;">
+        <a class="import-template-link" href="insightify_import_template.xlsx" download>&#x2B07; Download Template</a>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-modal-cancel" id="importCancelBtn">Cancel</button>
+          <button class="btn-modal-confirm" id="importConfirmBtn"
+            style="background:rgba(82,183,136,0.15);border-color:rgba(82,183,136,0.3);color:var(--accent);display:none;">
+            &#x2713; Import <span id="importConfirmCount"></span> Rows
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGOUT MODAL ═══════════════════════════════ -->
+  <div class="modal-backdrop" id="logoutModal">
+    <div class="modal-card">
+      <div class="modal-icon">&#x23FB;</div>
+      <h3 class="modal-title">Sign Out?</h3>
+      <p class="modal-body">You'll be returned to the login page.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modalCancelBtn">Cancel</button>
+        <button class="btn-modal-confirm" id="modalConfirmBtn">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hamburger (mobile) -->
+  <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">&#x2630;</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Fetching live data&hellip;</div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ══ SIDEBAR ══════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">&#x2726;</div>
+        <span class="sidebar-logo-text">Insightify</span>
+      </div>
+
+      <span class="sidebar-section-label">Navigation</span>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a class="nav-link active" href="dashboard.html"><span class="nav-icon">&#x25C8;</span> Executive Summary</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="sales.html"><span class="nav-icon">&#x27E1;</span> Sales Intelligence</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="product.html"><span class="nav-icon">&#x2B21;</span> Product Performance</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="reports.html"><span class="nav-icon">&#x25C9;</span> Reports &amp; Overview</a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="nav-link" style="cursor:pointer;">
+          <span class="nav-icon">&#x2299;</span>
+          <div>
+            <div style="font-size:12.5px;color:var(--text);" id="sidebarUserName">Analyst User</div>
+            <div style="font-size:10.5px;color:var(--muted-lt);font-family:'DM Mono',monospace;">Pro Plan</div>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn" title="Sign out">
+          <span class="logout-icon">&#x23FB;</span>
+          <span class="logout-label">Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ HEADER ════════════════════════════════════ -->
+    <header class="top-header">
+      <div class="header-greeting">
+        <h2 id="greetingText">Good morning, Analyst</h2>
+        <span id="greetingDate"></span>
+      </div>
+      <div class="header-center">
+        <div class="search-bar">
+          <span class="search-icon">&#x2315;</span>
+          <input type="text" id="searchInput" placeholder="Search Records…" spellcheck="false" />
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-refresh" id="refreshBtn" title="Refresh data">&#x21BA;</button>
+        <div class="user-badge" id="avatarLogout" title="Sign out">
+          <div class="user-avatar" id="userAvatarInitials">J</div>
+          <div class="user-info">
+            <div class="user-fullname" id="userFullName">Jesryl Orosio</div>
+            <div class="user-role">Analyst</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ MAIN ══════════════════════════════════════ -->
+    <main class="main-content">
+
+      <div class="page-title">
+        <h1>Executive <em>Summary</em></h1>
+        <span class="page-title-meta" id="liveTime"></span>
+      </div>
+
+      <div class="error-banner" id="errorBanner" style="display:none;">
+        <span>&#x26A0; Could not connect to database. Check that your server is running and <code>insights.php</code> is accessible.</span>
+        <button onclick="document.getElementById('errorBanner').style.display='none'">&#x2715;</button>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Total Revenue <span style="font-size:14px;opacity:0.5;">$</span></div>
+          <div class="kpi-value" id="kpi-revenue">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge" id="kpi-revenue-badge">&mdash;</span>
+            <span class="kpi-sub">vs last month</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Avg. LTV <span style="font-size:14px;opacity:0.5;">&#x27F3;</span></div>
+          <div class="kpi-value" id="kpi-ltv">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge" id="kpi-ltv-badge">&mdash;</span>
+            <span class="kpi-sub">per customer</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Churn Rate <span style="font-size:14px;opacity:0.5;">&#x26A0;</span></div>
+          <div class="kpi-value" id="kpi-churn">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge" id="kpi-churn-badge">&mdash;</span>
+            <span class="kpi-sub" id="kpi-churn-label">vs last period</span>
+          </div>
+        </div>
+        <div class="glass-card kpi-card">
+          <div class="kpi-label">Active Sessions <span class="live-dot"></span></div>
+          <div class="kpi-value" id="kpi-sessions">&mdash;</div>
+          <div class="kpi-footer">
+            <span class="badge badge-neutral" id="kpi-sessions-badge">&#x2192; Live</span>
+            <span class="kpi-sub">right now</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Grid -->
+      <div class="analytics-grid">
+
+        <!-- Sales Trends -->
+        <div class="glass-card chart-main">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Sales Trends</div>
+              <div class="chart-subtitle" id="salesChartSubtitle">Monthly revenue &middot; loading&hellip;</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div class="chart-legend">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#52B788;"></span>Revenue
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:rgba(82,183,136,0.35);"></span>Target
+                </div>
+              </div>
+              <button class="btn-ghost" id="setTargetBtn" style="font-size:11px;padding:4px 10px;">
+                &#x2699; Set Target
+              </button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="salesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Payment Distribution -->
+        <div class="glass-card chart-donut">
+          <div class="chart-header" style="margin-bottom:12px;">
+            <div>
+              <div class="chart-title">Payment Distribution</div>
+              <div class="chart-subtitle">By channel &middot; YTD</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="donutChart" style="max-width:200px;max-height:200px;"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" id="donutCenterVal">&mdash;</div>
+              <div class="donut-center-lbl">total revenue this month</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="glass-card table-section">
+          <div class="table-header">
+            <div class="table-title">Recent Transaction Log</div>
+            <div class="table-actions">
+              <button class="btn-ghost" id="exportCsvBtn">&#x2913; Export</button>
+              <a class="btn-ghost" href="template.xlsx" download style="text-decoration:none;">&#x2B07; Template</a>
+              <button class="btn-ghost" id="importBtn">&#x2912; Import</button>
+              <div class="filter-wrap">
+                <button class="btn-ghost" id="filterBtn">&#x21CC; Filter</button>
+                <div class="filter-dropdown" id="filterDropdown">
+                  <select class="filter-select" id="monthFilter">
+                    <option value="">All Months</option>
+                  </select>
+                  <select class="filter-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="how-table">
+              <thead>
+                <tr>
+                  <th>Tx ID</th><th>Customer</th><th>User</th><th>Product</th>
+                  <th>Date</th><th>Status</th><th>Amount</th>
+                </tr>
+              </thead>
+              <tbody id="txTableBody">
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted-lt);">Loading transactions&hellip;</td></tr>
+              </tbody>
+            </table>
+            <div class="show-all-wrap">
+              <button class="btn-ghost" id="showAllBtn" style="display:none;">▼ Show All Transactions</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /analytics-grid -->
+    </main>
+  </div><!-- /app-shell -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// FIX: Use a single API_URL for all calls. IMPORT_API was declared
+//      but never used — the import confirm button was already posting
+//      to API_URL + '?action=import', which is correct since
+//      insights.php handles the import action.
+// ═══════════════════════════════════════════════════════════
+const API_URL = 'backend/insights.php';
+
+// ── Greeting & clock ──────────────────────────────────────
+(function() {
+  const greet  = document.getElementById('greetingText');
+  const dateEl = document.getElementById('greetingDate');
+  const liveEl = document.getElementById('liveTime');
+  const h      = new Date().getHours();
+
+  const storedName = localStorage.getItem('user_name') || 'Analyst User';
+  const firstName  = storedName.split(' ')[0];
+  greet.textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + ', ' + firstName;
+
+  const sidebarName = document.getElementById('sidebarUserName');
+  if (sidebarName) sidebarName.textContent = storedName;
+
+  dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  function tick() { liveEl.textContent = 'LIVE \u00B7 ' + new Date().toLocaleTimeString('en-US', { hour12: false }); }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+// ── Mobile sidebar ────────────────────────────────────────
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const sidebar      = document.getElementById('sidebar');
+const overlay      = document.getElementById('sidebarOverlay');
+hamburgerBtn.addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+
+// ── Chart.js defaults ─────────────────────────────────────
+Chart.defaults.color       = 'rgba(232,245,238,0.50)';
+Chart.defaults.borderColor = 'rgba(82,183,136,0.10)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size   = 11;
+
+let salesChartInst  = null;
+let donutChartInst  = null;
+let allTransactions = [];
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN DATA FETCH
+// ═══════════════════════════════════════════════════════════
+async function loadDashboard() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('errorBanner').style.display   = 'none';
+  try {
+    // FIX: Added credentials: 'include' so session cookie is sent with every request
+    const res  = await fetch(API_URL + '?t=' + Date.now(), { credentials: 'include' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    renderKPIs(data.kpi);
+
+    const name     = localStorage.getItem('user_name') || 'Analyst User';
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    document.getElementById('userFullName').textContent       = name;
+    document.getElementById('userAvatarInitials').textContent = initials;
+    document.getElementById('greetingText').textContent =
+      (new Date().getHours() < 12 ? 'Good morning' :
+       new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening') + ', ' + name.split(' ')[0];
+
+    currentTrendData = data.sales_trend || [];
+    renderSalesChart(currentTrendData);
+    renderDonut(data.payment_dist, data.kpi.revenue.total);
+    allTransactions = data.recent_txns || [];
+    populateMonthFilter();
+    renderTransactions(allTransactions);
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+    document.getElementById('errorBanner').style.display = 'flex';
+    setKpiPlaceholder();
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// ── KPI Rendering ─────────────────────────────────────────
+function renderKPIs(kpi) {
+  document.getElementById('kpi-revenue').textContent = kpi.revenue.formatted;
+  const revBadge = document.getElementById('kpi-revenue-badge');
+  const revUp    = kpi.revenue.direction === 'up';
+  revBadge.textContent = (revUp ? '\u2191' : '\u2193') + ' ' + (revUp ? '+' : '') + kpi.revenue.change_pct + '%';
+  revBadge.className   = 'badge ' + (revUp ? 'badge-up' : 'hfp-badge-off');
+
+  document.getElementById('kpi-ltv').textContent = kpi.avg_ltv.formatted;
+  const ltvBadge = document.getElementById('kpi-ltv-badge');
+  if (kpi.avg_ltv.change_pct !== undefined) {
+    const ltvUp = kpi.avg_ltv.direction === 'up';
+    ltvBadge.textContent = (ltvUp ? '\u2191 +' : '\u2193 ') + kpi.avg_ltv.change_pct + '%';
+    ltvBadge.className   = 'badge ' + (ltvUp ? 'badge-up' : 'hfp-badge-off');
+  } else {
+    ltvBadge.textContent = '\u2191 +4.1%';
+    ltvBadge.className   = 'badge badge-up';
+  }
+
+  const churnPct = parseFloat(kpi.churn.pct);
+  document.getElementById('kpi-churn').textContent = churnPct + '%';
+  const churnBadge = document.getElementById('kpi-churn-badge');
+  const churnWorse = kpi.churn.direction === 'up';
+  churnBadge.textContent = (churnWorse ? '\u2191 +' : '\u2193 ') + Math.abs(kpi.churn.change) + '%';
+
+  let churnClass, churnLabel;
+  if (churnPct <= 0) {
+    churnClass = 'badge-up';
+    churnLabel = 'Excellent';
+  } else if (churnPct <= 5) {
+    churnClass = 'badge-up';
+    churnLabel = 'Good · ' + churnPct + '%';
+  } else if (churnPct <= 10) {
+    churnClass = 'badge-neutral';
+    churnLabel = 'Moderate · ' + churnPct + '%';
+  } else {
+    churnClass = 'hfp-badge-off';
+    churnLabel = 'Needs Attention · ' + churnPct + '%';
+  }
+  churnBadge.className = 'badge ' + churnClass;
+  document.getElementById('kpi-churn-label').textContent = churnLabel;
+
+  const sessEl    = document.getElementById('kpi-sessions');
+  sessEl.textContent = kpi.active_sessions > 0 ? kpi.active_sessions.toLocaleString() : '0';
+  const sessBadge = document.getElementById('kpi-sessions-badge');
+  sessBadge.textContent = kpi.active_sessions > 0 ? '\u25CF Live' : '\u2192 Stable';
+  sessBadge.className   = 'badge ' + (kpi.active_sessions > 0 ? 'badge-up' : 'badge-neutral');
+}
+
+function setKpiPlaceholder() {
+  ['kpi-revenue','kpi-ltv','kpi-churn','kpi-sessions'].forEach(id => {
+    document.getElementById(id).textContent = 'N/A';
+  });
+}
+
+// ── Sales Chart ───────────────────────────────────────────
+function renderSalesChart(trend) {
+  if (!trend || trend.length === 0) return;
+  const labels  = trend.map(r => r.label);
+  const actuals = trend.map(r => r.actual / 1000);
+  const targets = trend.map(r => r.target / 1000);
+  if (labels.length >= 2) {
+    document.getElementById('salesChartSubtitle').textContent =
+      'Monthly revenue \u00B7 ' + labels[0] + ' \u2013 ' + labels[labels.length - 1];
+  }
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 240);
+  grad.addColorStop(0,   'rgba(82,183,136,0.28)');
+  grad.addColorStop(0.6, 'rgba(82,183,136,0.06)');
+  grad.addColorStop(1,   'rgba(82,183,136,0.00)');
+  const gradTarget = ctx.createLinearGradient(0, 0, 0, 240);
+  gradTarget.addColorStop(0, 'rgba(82,183,136,0.10)');
+  gradTarget.addColorStop(1, 'rgba(82,183,136,0.00)');
+  if (salesChartInst) salesChartInst.destroy();
+  salesChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Revenue', data: actuals,
+          borderColor: '#52B788', borderWidth: 2.5,
+          backgroundColor: grad, fill: true, tension: 0.42,
+          pointRadius: 3.5, pointBackgroundColor: '#52B788',
+          pointBorderColor: 'rgba(5,18,12,0.85)', pointBorderWidth: 2,
+          pointHoverRadius: 6, pointHoverBackgroundColor: '#52B788',
+          pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2,
+        },
+        {
+          label: 'Target', data: targets,
+          borderColor: 'rgba(82,183,136,0.35)', borderWidth: 1.5,
+          borderDash: [5,4], backgroundColor: gradTarget,
+          fill: false, tension: 0.42, pointRadius: 0, pointHoverRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,18,12,0.92)', borderColor: 'rgba(82,183,136,0.25)',
+          borderWidth: 1, padding: 12,
+          titleFont: { family:"'DM Mono', monospace", size:11 },
+          bodyFont:  { family:"'DM Sans', sans-serif", size:12 },
+          titleColor: 'rgba(232,245,238,0.55)', bodyColor: '#e8f5ee',
+          callbacks: { label(ctx) { return '  ' + ctx.dataset.label + ': $' + ctx.raw.toFixed(1) + 'k'; } }
+        }
+      },
+      scales: {
+        x: { grid:{ color:'rgba(82,183,136,0.06)', drawTicks:false }, border:{ display:false }, ticks:{ padding:8 } },
+        y: { grid:{ color:'rgba(82,183,136,0.06)', drawTicks:false }, border:{ display:false },
+             ticks:{ padding:10, callback(v) { return '$' + v + 'k'; } } }
+      }
+    }
+  });
+}
+
+// ── Donut Chart ───────────────────────────────────────────
+const DONUT_COLORS = ['#52B788','#2d8a5e','rgba(82,183,136,0.45)','#1a4d33','#a8d8be'];
+
+function renderDonut(payDist, totalRev) {
+  if (!payDist || payDist.length === 0) return;
+  const labels = payDist.map(p => p.method);
+  const pcts   = payDist.map(p => p.pct);
+  const colors = payDist.map((_, i) => DONUT_COLORS[i % DONUT_COLORS.length]);
+  document.getElementById('donutCenterVal').textContent = totalRev >= 1000
+    ? '$' + (totalRev / 1000).toFixed(1) + 'k'
+    : '$' + totalRev.toFixed(2);
+  document.getElementById('donutLegend').innerHTML = payDist.map((p, i) => `
+    <div class="donut-legend-row">
+      <span class="donut-legend-label">
+        <span class="donut-legend-swatch" style="background:${colors[i]};"></span>${p.method}
+      </span>
+      <span class="donut-legend-pct">${p.pct}%</span>
+    </div>
+  `).join('');
+  if (donutChartInst) donutChartInst.destroy();
+  donutChartInst = new Chart(document.getElementById('donutChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: pcts, backgroundColor: colors, borderColor: 'rgba(5,18,12,0.85)', borderWidth:3, hoverBorderColor:'#52B788', hoverBorderWidth:2, hoverOffset:6 }] },
+    options: {
+      responsive:true, maintainAspectRatio:true, cutout:'72%',
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          backgroundColor:'rgba(5,18,12,0.92)', borderColor:'rgba(82,183,136,0.25)',
+          borderWidth:1, padding:10,
+          titleFont:{ family:"'DM Mono', monospace", size:11 },
+          bodyFont: { family:"'DM Sans', sans-serif", size:12 },
+          titleColor:'rgba(232,245,238,0.55)', bodyColor:'#e8f5ee',
+          callbacks: { label(ctx) { return '  ' + ctx.label + ':  ' + ctx.raw + '%'; } }
+        }
+      }
+    }
+  });
+}
+
+// ── Transactions Table ────────────────────────────────────
+function statusClass(s) { return s === 'completed' ? 'status-success' : s === 'pending' ? 'status-pending' : 'status-failed'; }
+function statusLabel(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+let showAllTransactions = false;
+
+function renderTransactions(txns) {
+  const tbody = document.getElementById('txTableBody');
+  if (!txns || txns.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted-lt);">No transactions found.</td></tr>';
+    document.getElementById('showAllBtn').style.display = 'none';
+    return;
+  }
+
+  const display = showAllTransactions ? txns : txns.slice(0, 5);
+
+  tbody.innerHTML = display.map(tx => `
+    <tr>
+      <td><span class="tx-id">${tx.tx_ref}</span></td>
+      <td><span class="tx-customer">${escHtml(tx.customer_name)}</span></td>
+      <td><span style="color:var(--muted-lt);font-size:12.5px;">${escHtml(tx.user_name || '—')}</span></td>
+      <td><span style="color:var(--text-dim);font-size:12.5px;">${escHtml(tx.product_name)}</span></td>
+      <td><span class="tx-date">${tx.formatted_date}</span></td>
+      <td><span class="status-badge ${statusClass(tx.status)}"><span class="status-dot"></span>${statusLabel(tx.status)}</span></td>
+      <td><span class="tx-amount">$${parseFloat(tx.total_amount).toLocaleString('en-US',{minimumFractionDigits:2})}</span></td>
+    </tr>
+  `).join('');
+
+  const btn = document.getElementById('showAllBtn');
+  if (txns.length > 5) {
+    btn.style.display = 'block';
+    btn.textContent   = showAllTransactions ? '▲ Show Less' : '▼ Show All ' + txns.length + ' Transactions';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Filter Button Toggle ──────────────────────────────────
+document.getElementById('filterBtn').addEventListener('click', function() {
+  const dropdown  = document.getElementById('filterDropdown');
+  const isVisible = dropdown.style.display === 'flex';
+  dropdown.style.display  = isVisible ? 'none' : 'flex';
+  this.style.background   = isVisible ? '' : 'var(--accent-dim)';
+  this.style.color        = isVisible ? '' : 'var(--accent)';
+  this.style.borderColor  = isVisible ? '' : 'var(--accent-glow)';
+});
+
+document.addEventListener('click', function(e) {
+  const filterBtn      = document.getElementById('filterBtn');
+  const filterDropdown = document.getElementById('filterDropdown');
+  if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
+    filterDropdown.style.display = 'none';
+    filterBtn.style.background   = '';
+    filterBtn.style.color        = '';
+    filterBtn.style.borderColor  = '';
+  }
+});
+
+// ── Month Filter Population ───────────────────────────────
+function populateMonthFilter() {
+  const select = document.getElementById('monthFilter');
+  const months = [...new Set(allTransactions.map(t => t.formatted_date.slice(0, 7)))].sort().reverse();
+  select.innerHTML = '<option value="">All Months</option>' +
+    months.map(m => {
+      const [y, mo] = m.split('-');
+      const label   = new Date(y, mo - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return `<option value="${m}">${label}</option>`;
+    }).join('');
+}
+
+// ── FIX: Single applyFilters definition (duplicate removed) ──
+// The original had two definitions; the first (without month filter)
+// silently overwrote itself with the second. Now only one exists.
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const status = document.getElementById('statusFilter').value;
+  const month  = document.getElementById('monthFilter').value;
+
+  const filtered = allTransactions.filter(t => {
+    const matchesStatus = status ? t.status === status : true;
+    const matchesMonth  = month  ? t.formatted_date.startsWith(month) : true;
+    const matchesSearch = search
+      ? (
+          (t.customer_name  || '').toLowerCase().includes(search) ||
+          (t.product_name   || '').toLowerCase().includes(search) ||
+          (t.tx_ref         || '').toLowerCase().includes(search) ||
+          (t.status         || '').toLowerCase().includes(search) ||
+          (t.payment_method || '').toLowerCase().includes(search) ||
+          (t.formatted_date || '').toLowerCase().includes(search) ||
+          (t.user_name      || '').toLowerCase().includes(search)
+        )
+      : true;
+    return matchesStatus && matchesMonth && matchesSearch;
+  });
+
+  renderTransactions(filtered);
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('monthFilter').addEventListener('change', applyFilters);
+
+// ── Show All ──────────────────────────────────────────────
+document.getElementById('showAllBtn').addEventListener('click', () => {
+  showAllTransactions = !showAllTransactions;
+  applyFilters();
+});
+
+// ── CSV Export ────────────────────────────────────────────
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  if (!allTransactions.length) return;
+  const header = ['TX ID','Customer','User','Product','Date','Status','Amount'];
+  const rows   = allTransactions.map(t => [
+    t.tx_ref, t.customer_name, t.user_name || '—', t.product_name,
+    t.formatted_date, t.status, parseFloat(t.total_amount).toFixed(2)
+  ]);
+  const csv  = [header,...rows].map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {href:url, download:'insightify_transactions.csv'});
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ── Refresh ───────────────────────────────────────────────
+document.getElementById('refreshBtn').addEventListener('click', () => loadDashboard());
+setInterval(loadDashboard, 5 * 60 * 1000);
+
+// ── Logout ────────────────────────────────────────────────
+const logoutModal     = document.getElementById('logoutModal');
+const logoutBtn       = document.getElementById('logoutBtn');
+const avatarLogout    = document.getElementById('avatarLogout');
+const modalCancelBtn  = document.getElementById('modalCancelBtn');
+const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+function showLogoutModal() { logoutModal.classList.add('active'); }
+function hideLogoutModal() { logoutModal.classList.remove('active'); }
+logoutBtn.addEventListener('click', showLogoutModal);
+avatarLogout.addEventListener('click', showLogoutModal);
+modalCancelBtn.addEventListener('click', hideLogoutModal);
+logoutModal.addEventListener('click', e => { if (e.target === logoutModal) hideLogoutModal(); });
+modalConfirmBtn.addEventListener('click', async () => {
+  modalConfirmBtn.textContent = 'Signing out\u2026';
+  modalConfirmBtn.disabled = true;
+  try {
+    await fetch(API_URL + '?action=logout', { credentials: 'include' });
+  } catch(_) {}
+  localStorage.removeItem('user_name');
+  localStorage.removeItem('user_firstname');
+  localStorage.removeItem('user_lastname');
+  window.location.href = 'index.html';
+});
+
+// ── Target Setting ────────────────────────────────────────
+let currentTargetPct = 10;
+let currentTrendData = [];
+const targetModal   = document.getElementById('targetModal');
+const targetInput   = document.getElementById('targetPctInput');
+const targetPreview = document.getElementById('targetPreview');
+const presetBtns    = document.querySelectorAll('.preset-btn');
+
+document.getElementById('setTargetBtn').addEventListener('click', () => {
+  targetInput.value = currentTargetPct;
+  updatePreview(currentTargetPct);
+  updatePresetActive(currentTargetPct);
+  targetModal.classList.add('active');
+});
+document.getElementById('targetCancelBtn').addEventListener('click', () => targetModal.classList.remove('active'));
+targetModal.addEventListener('click', e => { if (e.target === targetModal) targetModal.classList.remove('active'); });
+targetInput.addEventListener('input', () => { const v = parseInt(targetInput.value)||10; updatePreview(v); updatePresetActive(v); });
+presetBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = parseInt(btn.dataset.val);
+    targetInput.value = v; updatePreview(v); updatePresetActive(v);
+  });
+});
+function updatePreview(pct) {
+  targetPreview.textContent = 'Target = previous month \u00D7 ' + (1 + pct/100).toFixed(2);
+}
+function updatePresetActive(val) {
+  presetBtns.forEach(b => b.classList.toggle('active', parseInt(b.dataset.val) === val));
+}
+document.getElementById('targetApplyBtn').addEventListener('click', () => {
+  currentTargetPct = parseInt(targetInput.value) || 10;
+  targetModal.classList.remove('active');
+  if (currentTrendData.length > 0) {
+    const newTrend = currentTrendData.map((row, i) => ({
+      ...row,
+      target: i > 0
+        ? Math.round(currentTrendData[i-1].actual * (1 + currentTargetPct/100) * 100) / 100
+        : Math.round(row.actual * 0.95 * 100) / 100
+    }));
+    renderSalesChart(newTrend);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  IMPORT FEATURE
+// ═══════════════════════════════════════════════════════════
+const importModal        = document.getElementById('importModal');
+const importBtn          = document.getElementById('importBtn');
+const importCancelBtn    = document.getElementById('importCancelBtn');
+const importConfirmBtn   = document.getElementById('importConfirmBtn');
+const importDropZone     = document.getElementById('importDropZone');
+const importFileInput    = document.getElementById('importFileInput');
+const importProgress     = document.getElementById('importProgress');
+const importProgressTxt  = document.getElementById('importProgressText');
+const importPreviewWrap  = document.getElementById('importPreviewWrap');
+const importStats        = document.getElementById('importStats');
+const importErrList      = document.getElementById('importErrList');
+const importTableScroll  = document.getElementById('importTableScroll');
+const importTableBody    = document.getElementById('importTableBody');
+const importConfirmCount = document.getElementById('importConfirmCount');
+let pendingImportRows    = [];
+
+importBtn.addEventListener('click', () => { resetImportModal(); importModal.classList.add('active'); });
+importCancelBtn.addEventListener('click', () => importModal.classList.remove('active'));
+importModal.addEventListener('click', e => { if (e.target === importModal) importModal.classList.remove('active'); });
+
+importDropZone.addEventListener('dragover', e => { e.preventDefault(); importDropZone.classList.add('dragover'); });
+importDropZone.addEventListener('dragleave', () => importDropZone.classList.remove('dragover'));
+importDropZone.addEventListener('drop', e => {
+  e.preventDefault(); importDropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]);
+});
+importFileInput.addEventListener('change', () => { if (importFileInput.files[0]) handleImportFile(importFileInput.files[0]); });
+
+function resetImportModal() {
+  importFileInput.value           = '';
+  importDropZone.style.display    = 'block';
+  importDropZone.querySelector('.import-drop-icon').innerHTML = '&#x1F4C2;';
+  importDropZone.querySelector('.import-drop-text').textContent = 'Drop your file here, or click to browse';
+  importDropZone.querySelector('.import-drop-hint').textContent = 'Supported: .xlsx · .xls · .csv — max 10 MB';
+  importDropZone.style.borderColor = '';
+  importDropZone.style.background  = '';
+  importProgress.style.display    = 'none';
+  importPreviewWrap.style.display = 'none';
+  importErrList.style.display     = 'none';
+  importTableScroll.style.display = 'none';
+  importConfirmBtn.style.display  = 'none';
+  importStats.innerHTML     = '';
+  importTableBody.innerHTML = '';
+  importErrList.innerHTML   = '';
+  pendingImportRows         = [];
+}
+
+async function handleImportFile(file) {
+  if (file.size > 10 * 1024 * 1024) { alert('File too large. Maximum is 10 MB.'); return; }
+
+  importDropZone.querySelector('.import-drop-icon').textContent = '📄';
+  importDropZone.querySelector('.import-drop-text').textContent = file.name;
+  importDropZone.querySelector('.import-drop-hint').textContent = (file.size / 1024).toFixed(1) + ' KB · Click to change file';
+  importDropZone.style.borderColor = 'rgba(82,183,136,0.4)';
+  importDropZone.style.background  = 'rgba(82,183,136,0.07)';
+
+  importProgress.style.display    = 'flex';
+  importProgressTxt.textContent   = 'Parsing "' + file.name + '"…';
+  importPreviewWrap.style.display = 'none';
+  importConfirmBtn.style.display  = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data     = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+      const rows     = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      importProgress.style.display = 'none';
+
+      if (!rows.length) { alert('File is empty.'); return; }
+
+      console.log('Columns found:', Object.keys(rows[0]));
+
+      const validRows = [];
+      const errorRows = [];
+
+      rows.forEach((row, idx) => {
+        const get = (...keys) => {
+          for (const k of keys) {
+            const found = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+            if (found && row[found] !== '') return String(row[found]).trim();
+          }
+          return '';
+        };
+
+        const customer = get('customer_name', 'customer', 'name');
+        const product  = get('product_name', 'product', 'item');
+        const date     = get('formatted_date', 'date', 'transaction_date');
+        const status   = get('status', 'state');
+        const amount   = get('total_amount', 'amount', 'total', 'price');
+        const txRef    = get('tx_ref', 'tx_id', 'TX ID', 'id', 'reference');
+        const method   = get('payment_method', 'method', 'payment');
+
+        const errors = [];
+        if (!customer) errors.push('Missing Customer');
+        if (!amount || isNaN(parseFloat(amount))) errors.push('Invalid Amount');
+
+        if (errors.length) {
+          errorRows.push({ row: idx + 2, errors });
+        } else {
+          const rawStatus  = status.toLowerCase();
+          const normStatus = rawStatus.includes('complet') ? 'completed'
+                           : rawStatus.includes('pend')    ? 'pending'
+                           : rawStatus.includes('fail')    ? 'failed'
+                           : 'completed';
+
+          let formattedDate = date;
+          if (date) {
+            const d = new Date(date);
+            if (!isNaN(d.getTime())) {
+              formattedDate = d.toISOString().split('T')[0];
+            }
+          }
+
+          validRows.push({
+            tx_ref:         txRef || ('TXN-' + Date.now() + '-' + idx),
+            customer_name:  customer,
+            product_name:   product || '—',
+            formatted_date: formattedDate || new Date().toISOString().split('T')[0],
+            status:         normStatus,
+            total_amount:   parseFloat(amount).toFixed(2),
+            payment_method: method || 'Other',
+          });
+        }
+      });
+
+      pendingImportRows = validRows;
+
+      importStats.innerHTML =
+        '<span class="import-stat import-stat-ok">✓ ' + validRows.length + ' valid row' + (validRows.length !== 1 ? 's' : '') + '</span>' +
+        (errorRows.length > 0 ? '<span class="import-stat import-stat-err">✗ ' + errorRows.length + ' with errors</span>' : '') +
+        '<span class="import-stat import-stat-neutral">Total: ' + rows.length + '</span>';
+
+      if (errorRows.length > 0) {
+        importErrList.innerHTML     = errorRows.map(e => '<p>Row ' + e.row + ': ' + e.errors.join(' · ') + '</p>').join('');
+        importErrList.style.display = 'block';
+      }
+
+      importPreviewWrap.style.display = 'flex';
+
+      if (validRows.length > 0) {
+        importConfirmBtn.style.display = 'inline-flex';
+        importConfirmBtn.disabled      = false;
+        importConfirmBtn.innerHTML     = '&#x2713; Import ' + validRows.length + ' Row' + (validRows.length !== 1 ? 's' : '');
+      }
+
+    } catch(err) {
+      importProgress.style.display = 'none';
+      console.error('Parse error:', err);
+      alert('Could not parse the file. Please check the format and try again.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// FIX: Import now uses API_URL + '?action=import' with credentials: 'include'
+// so the session cookie is sent and the server can authenticate the user.
+importConfirmBtn.addEventListener('click', async () => {
+  if (!pendingImportRows.length) return;
+  console.log('Sending to DB:', JSON.stringify(pendingImportRows, null, 2));
+
+  importConfirmBtn.disabled    = true;
+  importConfirmBtn.textContent = 'Importing…';
+
+  // Optimistically add to table
+  allTransactions = [...pendingImportRows, ...allTransactions];
+  renderTransactions(allTransactions);
+
+  try {
+    const res = await fetch(API_URL + '?action=import', {
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ rows: pendingImportRows }),
+    });
+    const data = await res.json();
+    console.log('Import response:', data);
+    if (data.success) {
+      // Reload fresh data from server after successful import
+      loadDashboard();
+    } else {
+      console.error('Import failed:', data);
+    }
+  } catch(err) {
+    console.error('DB save error:', err);
+  }
+
+  importModal.classList.remove('active');
+  showImportToast('Successfully imported ' + pendingImportRows.length + ' transaction' + (pendingImportRows.length !== 1 ? 's' : ''));
+
+  pendingImportRows          = [];
+  importConfirmBtn.disabled  = false;
+  importConfirmBtn.innerHTML = '&#x2713; Import 0 Rows';
+});
+
+function showImportToast(message) {
+  const toast = document.createElement('div');
+  toast.textContent = '\u2713 ' + message;
+  Object.assign(toast.style, {
+    position:'fixed', bottom:'28px', right:'28px', zIndex:'99999',
+    background:'rgba(5,18,12,0.97)', border:'1px solid rgba(82,183,136,0.3)',
+    color:'#52B788', padding:'12px 20px', borderRadius:'10px',
+    fontFamily:"'DM Mono',monospace", fontSize:'12.5px',
+    boxShadow:'0 8px 24px rgba(0,0,0,0.5)',
+    transition:'opacity 0.4s ease',
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3600);
+}
+
+// ── Init ──────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
